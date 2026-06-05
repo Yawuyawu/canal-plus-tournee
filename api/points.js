@@ -1,8 +1,1 @@
-import { kv } from '@vercel/kv';
-
-export default async function handler(req, res) {
-  if (req.method === 'GET') {
-    const points = await kv.get('points') || [];
-    res.status(200).json(points);
-  }
-}
+import { kv } from "@vercel/kv"; export default async function handler(req, res) { const points = await kv.get("points") || 0; if (req.method === "POST") { const newPoints = points + 1; await kv.set("points", newPoints); return res.json({ points: newPoints }); } return res.json({ points }); }

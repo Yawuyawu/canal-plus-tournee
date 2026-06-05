@@ -1,55 +1,36 @@
-import L from 'leaflet';
+// public/main.js - VERSION RENDER FINALE
 
-const map = L.map('map').setView([6.5, 2.6], 13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-let myLoc = null;
-let markers = [];
-
-window.toast = function(msg) {
-  const t = document.getElementById('toast');
-  t.innerText = msg;
-  t.style.display = 'block';
-  setTimeout(() => t.style.display = 'none', 2000);
-}
-
-window.getGPS = function() {
-  navigator.geolocation.getCurrentPosition(p => {
-    myLoc = [p.coords.latitude, p.coords.longitude];
-    map.setView(myLoc, 13);
-    L.circleMarker(myLoc, {color:'#FF00FF',radius:15}).addTo(map).bindPopup('YOU').openPopup();
-    loadPoints();
-  }, () => toast('GPS refusé'));
-}
+const API_URL = '/api/points';
+let points = 0;
 
 async function loadPoints() {
-  if (!myLoc) return toast('Clique GPS d abord');
   try {
-    const res = await fetch(`/api/points?lat=${myLoc[0]}&lon=${myLoc[1]}`);
-    const data = await res.json();
-    markers.forEach(m => map.removeLayer(m));
-    markers = [];
-    data.forEach(p => {
-      const m = L.marker([p.lat, p.lon]).addTo(map).bindPopup(`<b>${p.name}</b><br><button onclick="window.open('tel:${p.phone}')" style="background:#00BFFF;border:none;color:#fff;padding:8px 12px;border-radius:8px;margin-top:5px">CALL ${p.phone}</button>`);
-      markers.push(m);
-    });
-    document.getElementById('count').innerText = `${data.length} points`;
-  } catch(e) { toast('Lance le backend: node server.cjs'); }
+    const response = await fetch(API_URL);
+    const data = await response.json();
+    points = data.points;
+    
+    // Met à jour le texte "0 PDV" en haut à droite
+    const pdvDiv = document.querySelector('[class*="PDV"]') || document.body;
+    pdvDiv.innerHTML = pdvDiv.innerHTML.replace('0 PDV', `${points} PDV`);
+    
+    console.log('Points:', points);
+  } catch (error) {
+    console.error('Erreur:', error);
+    alert('Erreur réseau : Backend coupé ?');
+  }
 }
 
-window.addPoint = async function() {
-  if (!myLoc) return toast('Clique GPS d abord');
-  const name = prompt('Nom du lieu?');
-  const phone = prompt('Numéro?');
-  if (!name ||!phone) return;
+async function savePoints(newPoints) {
   try {
-    await fetch('/api/add', {
+    await fetch(API_URL, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({name, phone, lat: myLoc[0], lon: myLoc[1]})
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ points: newPoints })
     });
-    toast('Ajouté 👑');
-    loadPoints();
-  } catch(e) { toast('Lance le backend: node server.cjs'); }
+  } catch (error) {
+    console.error('Erreur save:', error);
+  }
 }
 
-window.onload = getGPS;
+// Lance au démarrage
+document.addEventListener('DOMContentLoaded', loadPoints);

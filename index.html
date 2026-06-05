@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>CANAL+ | Gestion Tournée PDV</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    :root {
+      --canal-red: #E2001A;
+      --canal-black: #000000;
+      --canal-gray: #1a1a1a;
+      --canal-white: #FFFFFF;
+    }
+    body {font-family:'Poppins',sans-serif;margin:0;background:var(--canal-black);color:var(--canal-white)}
+  .header {background:var(--canal-black);padding:15px;text-align:center;border-bottom:3px solid var(--canal-red)}
+  .header img {height:40px}
+  .card {background:var(--canal-gray);margin:15px;border-radius:12px;padding:15px;border:1px solid #333}
+  .btn {background:var(--canal-red);color:var(--canal-white);border:none;padding:12px 20px;border-radius:8px;font-weight:700;cursor:pointer;width:100%;margin-top:10px}
+  .btn:active {opacity:0.8}
+    input,textarea,select {width:100%;padding:10px;margin:5px 0;background:#000;border:1px solid #333;border-radius:6px;color:var(--canal-white);box-sizing:border-box}
+  .point {border-left:4px solid var(--canal-red);padding:10px;margin:8px 0;background:#000;border-radius:6px}
+  .point.visited {border-left-color:#00C851;opacity:0.6}
+    #map {height:300px;border-radius:8px;margin:10px 0}
+  .badge {background:var(--canal-red);padding:3px 8px;border-radius:12px;font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Canal%2B.svg/2560px-Canal%2B.svg.png" alt="CANAL+">
+    <div style="font-size:14px;margin-top:5px">GESTION TOURNÉE PDV</div>
+  </div>
+  <div class="card">
+    <h3>⚙️ Configuration Agent</h3>
+    <input id="agent" placeholder="Nom agent terrain">
+    <input id="bossEmail" placeholder="Email chef" type="email">
+    <input id="senderEmail" placeholder="Ton email CANAL+ ou Gmail" type="email">
+    <input id="senderPass" placeholder="Mot de passe d'application" type="password">
+    <small style="color:#888">Gmail: mot de passe d'application requis. Outlook: mot de passe normal.</small>
+  </div>
+  <div class="card">
+    <h3>📍 Ajouter PDV</h3>
+    <input id="nom" placeholder="Nom du PDV *">
+    <input id="tel" placeholder="Téléphone *">
+    <input id="distri" placeholder="Distributeur">
+    <select id="cat">
+      <option value="standard">PDV Standard</option>
+      <option value="premium">PDV Premium</option>
+      <option value="vip">PDV VIP</option>
+    </select>
+    <button class="btn" onclick="ajouter()">➕ Ajouter PDV</button>
+  </div>
+  <div class="card">
+    <h3>🗺️ Tournée <span class="badge" id="stats">0/0</span></h3>
+    <div id="map"></div>
+    <div id="liste"></div>
+    <button class="btn" onclick="envoyerCR()">📧 Envoyer CR Tournée</button>
+  </div>
+  <div class="card" id="visiteCard" style="display:none">
+    <h3>✅ Visite: <span id="visiteNom"></span></h3>
+    <textarea id="notes" placeholder="Notes de visite..." rows="3"></textarea>
+    <input type="file" id="photo" accept="image/*" capture="camera">
+    <label><input type="checkbox" id="sendmail"> Envoyer mail au chef</label>
+    <button class="btn" onclick="validerVisite()">Valider Visite</button>
+  </div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let points = [], map, userPos, visiteId = null;
+async function loadPoints(){
+  const r = await fetch('/api/points');
+  points = await r.json();
+  render();
+}
+function render(){
+  const v = points.filter(p=>p.visited).length;
+  document.getElementById('stats').textContent = `${v}/${points.length}`;
+  document.getElementById('liste').innerHTML = points.map(p=>`
+    <div class="point ${p.visited?'visited':''}">
+      <b>${p.name}</b> - ${p.category}<br>
+      📞 ${p.phone} | ${p.distributor||'N/A'}
+      ${!p.visited?`<button class="btn" style="padding:5px;margin-top:5px" onclick="ouvrirVisite(${p.id},'${p.name}')">Visiter</button>`:''}
+    </div>
+  `).join('');
+  updateMap();
+}
+function updateMap(){
+  if(!map && userPos){
+    map = L.map('map').setView([userPos.lat, userPos.lon], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  }
+  if(map){
+    map.eachLayer(l=>{if(l instanceof L.Marker) map.removeLayer(l)});
+    points.forEach(p=>{
+      if(p.lat) L.marker([p.lat,p.lon]).addTo(map).bindPopup(p.name);
+    });
+  }
+}
+async function ajouter(){
+  const body = {
+    name: nom.value, phone: tel.value, distributor: distri.value, category: cat.value,
+    lat: userPos?.lat, lon: userPos?.lon
+  };
+  if(!body.name||!body.phone) return alert('Nom + Téléphone obligatoires');
+  await fetch('/api/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  nom.value=tel.value=distri.value=''; loadPoints();
+}
+function ouvrirVisite(id,name){
+  visiteId=id; document.getElementById('visiteNom').textContent=name;
+  document.getElementById('visiteCard').style.display='block';
+  window.scrollTo(0,document.body.scrollHeight);
+}
+async function validerVisite(){
+  const p = points.find(x=>x.id==visiteId);
+  const dist = userPos&&p.lat? (Math.acos(Math.sin(userPos.lat*Math.PI/180)*Math.sin(p.lat*Math.PI/180)+Math.cos(userPos.lat*Math.PI/180)*Math.cos(p.lat*Math.PI/180)*Math.cos((p.lon-userPos.lon)*Math.PI/180))*6371).toFixed(2) : 0;
+  let photo = '';
+  if(document.getElementById('photo').files[0]){
+    photo = await new Promise(r=>{const f=new FileReader();f.onload=e=>r(e.target.result);f.readAsDataURL(document.getElementById('photo').files[0])});
+  }
+  const body = {
+    pointId:visiteId, pointName:p.name, notes:notes.value, photo,
+    agent:agent.value, sendmail:sendmail.checked, lat:userPos?.lat, lon:userPos?.lon, distance:dist,
+    bossEmail:bossEmail.value, senderEmail:senderEmail.value, senderPass:senderPass.value
+  };
+  const r = await fetch('/api/visit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d = await r.json();
+  alert(d.ok?'Visite validée! '+d.mail:'Erreur: '+d.mail);
+  document.getElementById('visiteCard').style.display='none'; notes.value=''; loadPoints();
+}
+async function envoyerCR(){
+  const v = points.filter(p=>p.visited).length;
+  const listHtml = points.map(p=>`${p.visited?'✅':'⏳'} ${p.name} - ${p.phone}`).join('<br>');
+  const body = {
+    agent:agent.value, visited:v, total:points.length, listHtml,
+    crTexte:prompt('Commentaire tournée:'), stockPdv:0, creditPdv:0, nbRecrutement:0, nbReabo:0,
+    bossEmail:bossEmail.value, senderEmail:senderEmail.value, senderPass:senderPass.value
+  };
+  const r = await fetch('/api/tournee-mail',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d = await r.json();
+  alert(d.ok?'CR envoyé! '+d.mail:'Erreur: '+d.mail);
+}
+navigator.geolocation.getCurrentPosition(p=>{userPos={lat:p.coords.latitude,lon:p.coords.longitude};loadPoints()},()=>loadPoints());
+</script>
+</body>
+</html>

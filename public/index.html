@@ -1,68 +1,363 @@
-        async function envoyerCRGlobal() {
-            const data = {
-                agent: document.getElementById('cr-nom').value,
-                senderEmail: document.getElementById('cr-email-from').value,
-                senderPass: document.getElementById('cr-password').value,
-                bossEmail: document.getElementById('cr-email-to').value,
-                stockPdv: document.getElementById('cr-stock').value,
-                creditPdv: document.getElementById('cr-credit').value,
-                nbRecrutement: document.getElementById('cr-recrut').value,
-                nbReabo: document.getElementById('cr-reab').value,
-                crTexte: document.getElementById('cr-comment').value,
-                visited: pdvList.filter(p => p.visited).length,
-                total: points,
-                listHtml: document.getElementById('pdv-list').innerHTML
-            };
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournée Canal+ - Chef de Zone</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; }
+        #map { height: 100vh; width: 100%; }
+        .controls { position: fixed; top: 10px; left: 10px; z-index: 1000; display: flex; gap: 8px; flex-wrap: wrap; max-width: 90%; }
+        .btn { padding: 12px 16px; background: #FF0000; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; box-shadow: 0 4px 12px rgba(255,0,0,0.3); }
+        .btn:active { transform: scale(0.95); }
+        .btn-secondary { background: #1a1a1a; border: 1px solid #333; }
+        .btn-stats { background: #0066ff; }
+        .badge { position: fixed; top: 10px; right: 10px; background: #1a1a1a; padding: 8px 12px; border-radius: 8px; z-index: 1000; font-size: 13px; border: 1px solid #333; }
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1a1a1a; padding: 12px; z-index: 1000; border-top: 1px solid #333; display: flex; gap: 8px; overflow-x: auto; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 2000; padding: 20px; overflow-y: auto; }
+        .modal.active { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: #1a1a1a; border-radius: 16px; padding: 24px; width: 100%; max-width: 500px; border: 1px solid #333; max-height: 90vh; overflow-y: auto; }
+        .modal h2 { margin-bottom: 20px; color: #FF0000; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 14px; color: #999; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; background: #0a0a0a; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 16px; }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .btn-group { display: flex; gap: 8px; margin-top: 20px; }
+        .btn-group .btn { flex: 1; }
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #1a1a1a; padding: 12px 24px; border-radius: 8px; z-index: 3000; border: 1px solid #333; display: none; }
+        .toast.show { display: block; animation: slideUp 0.3s; }
+        @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        .stats-panel { position: fixed; top: 60px; left: 10px; right: 10px; background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 16px; z-index: 999; display: none; }
+        .stats-panel.show { display: block; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .stat-box { background: #0a0a0a; padding: 12px; border-radius: 8px; border: 1px solid #333; }
+        .stat-box .label { font-size: 11px; color: #666; margin-bottom: 4px; }
+        .stat-box .value { font-size: 24px; font-weight: 700; color: #FF0000; }
+        .alert-rupture { animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .history-box { background: #0a0a0a; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #333; }
+        .history-box .date { font-size: 12px; color: #666; margin-bottom: 4px; }
+        .leaflet-popup-content { color: #000; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="controls">
+        <button class="btn btn-secondary" id="btn-gps">📍 GPS</button>
+        <button class="btn btn-stats" id="btn-stats">📊 STATS</button>
+        <button class="btn" id="btn-add">+ AJOUTER</button>
+        <button class="btn btn-secondary" id="btn-route">🧭 ITINÉRAIRE</button>
+    </div>
+    <div class="badge" id="badge">0 PDV</div>
+    <div class="stats-panel" id="stats-panel">
+        <div class="stats-grid">
+            <div class="stat-box"><div class="label">Taux Visite</div><div class="value" id="stat-taux">0%</div></div>
+            <div class="stat-box"><div class="label">Stock Moyen</div><div class="value" id="stat-stock">0</div></div>
+            <div class="stat-box"><div class="label">Ruptures</div><div class="value" id="stat-rupture">0</div></div>
+            <div class="stat-box"><div class="label">Top Vendeur</div><div class="value" id="stat-top" style="font-size: 14px;">-</div></div>
+        </div>
+    </div>
+    <div class="bottom-bar">
+        <button class="btn btn-secondary" id="btn-send-cr">📤 ENVOYER CR</button>
+        <button class="btn btn-secondary" id="btn-excel">📊 EXPORT EXCEL</button>
+        <button class="btn btn-secondary" id="btn-share-wa">📱 PARTAGER WA</button>
+    </div>
+    <div class="modal" id="modal-add">
+        <div class="modal-content">
+            <h2>Nouveau PDV</h2>
+            <div class="form-group">
+                <label>Nom du PDV *</label>
+                <input type="text" id="add-nom" placeholder="Ex: Kiosque Central">
+            </div>
+            <div class="form-group">
+                <label>Téléphone</label>
+                <input type="tel" id="add-tel" placeholder="+229 XX XX XX XX">
+            </div>
+            <div class="form-group">
+                <label>Stock décodeurs *</label>
+                <input type="number" id="add-stock" placeholder="0" min="0">
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="btn-cancel-add">Annuler</button>
+                <button class="btn" id="btn-save-pdv">Enregistrer</button>
+            </div>
+        </div>
+    </div>
 
-            if (!data.senderPass) return toast('Mot de passe d\'app requis!');
+    <div class="modal" id="modal-visit">
+        <div class="modal-content">
+            <h2>Visite PDV</h2>
+            <div id="visit-history"></div>
+            <div class="form-group">
+                <label>Stock actuel *</label>
+                <input type="number" id="visit-stock" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+                <label>Ventes du jour *</label>
+                <input type="number" id="visit-ventes" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+                <label>Problèmes / Notes</label>
+                <textarea id="visit-problemes" placeholder="PLV manquante, formation needed..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Photo PLV</label>
+                <input type="file" id="visit-photo" accept="image/*" capture="environment">
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="btn-cancel-visit">Annuler</button>
+                <button class="btn" id="btn-wa-visit">📱 WhatsApp</button>
+                <button class="btn" id="btn-mail-visit">📧 Mail</button>
+            </div>
+        </div>
+    </div>
 
+    <div class="modal" id="modal-cr">
+        <div class="modal-content">
+            <h2>Compte-Rendu Global</h2>
+            <div class="form-group">
+                <label>Zone *</label>
+                <input type="text" id="cr-zone" placeholder="Ex: Porto-Novo Centre">
+            </div>
+            <div class="form-group">
+                <label>Vendeur</label>
+                <input type="text" id="cr-vendeur" placeholder="Ton nom">
+            </div>
+            <div class="form-group">
+                <label>Commentaire global</label>
+                <textarea id="cr-comment" placeholder="Résumé de la tournée..."></textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="btn-annuler">Annuler</button>
+                <button class="btn" id="btn-envoyer">📧 Envoyer Mail</button>
+                <button class="btn" id="btn-whatsapp">📱 WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+        let map, userMarker, routingControl;
+        let pdvs = [];
+        let currentLat = null, currentLng = null;
+        let selectedPdvId = null;
+
+        function initMap() {
+            map = L.map('map').setView([6.3703, 2.3912], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+        }
+
+        function toast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function showModal(id) { document.getElementById(id).classList.add('active'); }
+        function hideModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        async function loadData() {
             try {
-                const res = await fetch(API_MAIL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                const res = await fetch('/api/pdvs');
+                pdvs = await res.json();
+                updateMap();
+                updateBadge();
+                updateStats();
+            } catch (e) { console.error(e); }
+        }
+        function updateMap() {
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker && layer!== userMarker) map.removeLayer(layer);
+            });
+            pdvs.forEach(pdv => {
+                const isRupture = pdv.stock === 0;
+                const icon = L.divIcon({
+                    className: isRupture? 'alert-rupture' : '',
+                    html: `<div style="background:${pdv.visite? '#00ff00' : '#FF0000'};width:30px;height:30px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;font-weight:bold;color:white;">${pdv.stock}</div>`,
+                    iconSize: [30, 30]
                 });
-                const result = await res.json();
-                if (result.ok) {
-                    toast('CR global envoyé!');
-                    hideModal('modal-cr');
-                } else {
-                    toast('Erreur: ' + result.mail);
-                }
-            } catch (e) {
-                toast('Erreur réseau');
-            }
+                L.marker([pdv.lat, pdv.lng], { icon })
+                   .bindPopup(`<b>${pdv.nom}</b><br>Stock: ${pdv.stock}<br>Tel: ${pdv.tel || 'N/A'}<br><button onclick="openVisitModal(${pdv.id})" style="background:#FF0000;color:white;border:none;padding:8px 12px;border-radius:6px;margin-top:8px;cursor:pointer;">VISITER</button>`)
+                   .addTo(map);
+            });
         }
 
-        function partagerWhatsApp() {
-            const visited = pdvList.filter(p => p.visited).length;
-            const msg = `*Résumé Tournée Canal+*%0A${visited}/${points} PDV visités%0A%0A${pdvList.map(p=>`${p.visited?'✅':'⏳'} ${p.nom}: ${p.phone} - Stock ${p.stock || 0}${(parseInt(p.stock)||0)<10?' ⚠️':''}`).join('%0A')}`;
-            window.open(`https://wa.me/?text=${msg}`, '_blank');
+        function updateBadge() {
+            const total = pdvs.length;
+            const visites = pdvs.filter(p => p.visite).length;
+            document.getElementById('badge').textContent = `${visites}/${total} PDV`;
         }
 
-        function exportExcel() {
-            window.open(API_EXCEL, '_blank');
-            toast('Export Excel lancé');
+        function updateStats() {
+            const total = pdvs.length;
+            const visites = pdvs.filter(p => p.visite).length;
+            const taux = total? Math.round((visites / total) * 100) : 0;
+            const stockTotal = pdvs.reduce((sum, p) => sum + (p.stock || 0), 0);
+            const stockMoyen = total? Math.round(stockTotal / total) : 0;
+            const ruptures = pdvs.filter(p => p.stock === 0).length;
+            const topVendeur = pdvs.reduce((max, p) => (p.ventes > (max.ventes || 0)? p : max), { nom: '-', ventes: 0 });
+            document.getElementById('stat-taux').textContent = taux + '%';
+            document.getElementById('stat-stock').textContent = stockMoyen;
+            document.getElementById('stat-rupture').textContent = ruptures;
+            document.getElementById('stat-top').textContent = topVendeur.nom;
         }
 
         function toggleStats() {
-            const dash = document.getElementById('dashboard');
-            dash.style.display = dash.style.display === 'grid'? 'none' : 'grid';
-            if (dash.style.display === 'grid') updateDashboard();
+            document.getElementById('stats-panel').classList.toggle('show');
         }
 
-        document.getElementById('visit-photo').onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    currentPhotoBase64 = ev.target.result;
-                    document.getElementById('photo-preview').src = currentPhotoBase64;
-                    document.getElementById('photo-preview').style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            }
-        };
+        function getGPS() {
+            if (!navigator.geolocation) return toast('GPS non supporté');
+            navigator.geolocation.getCurrentPosition(pos => {
+                currentLat = pos.coords.latitude;
+                currentLng = pos.coords.longitude;
+                if (userMarker) map.removeLayer(userMarker);
+                userMarker = L.marker([currentLat, currentLng], {
+                    icon: L.divIcon({
+                        html: '<div style="background:#0066ff;width:20px;height:20px;border-radius:50%;border:3px solid white;"></div>',
+                        iconSize: [20, 20]
+                    })
+                }).addTo(map).bindPopup('TOI').openPopup();
+                map.setView([currentLat, currentLng], 15);
+                toast('Position GPS active');
+            }, () => toast('Erreur GPS'));
+        }
+
+        async function sauverPDV() {
+            const nom = document.getElementById('add-nom').value.trim();
+            const tel = document.getElementById('add-tel').value.trim();
+            const stock = parseInt(document.getElementById('add-stock').value);
+            if (!nom || isNaN(stock)) return toast('Nom et stock obligatoires');
+            try {
+                const res = await fetch('/api/pdvs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nom, tel, stock, lat: currentLat, lng: currentLng })
+                });
+                if (res.ok) {
+                    hideModal('modal-add');
+                    document.getElementById('add-nom').value = '';
+                    document.getElementById('add-tel').value = '';
+                    document.getElementById('add-stock').value = '';
+                    loadData();
+                    toast('PDV ajouté!');
+                }
+            } catch (e) { toast('Erreur serveur'); }
+        }
+
+        async function openVisitModal(id) {
+            selectedPdvId = id;
+            const pdv = pdvs.find(p => p.id === id);
+            document.getElementById('visit-history').innerHTML = `
+                <div class="history-box">
+                    <div class="date">Dernière visite: ${pdv.derniere_visite || 'Jamais'}</div>
+                    <div>Stock: ${pdv.stock} | Ventes: ${pdv.ventes || 0}</div>
+                    <div style="font-size:12px;color:#999;margin-top:4px;">${pdv.problemes || 'Aucun problème'}</div>
+                </div>
+            `;
+            showModal('modal-visit');
+        }
+
+        async function envoyerVisite(type) {
+            const stock = parseInt(document.getElementById('visit-stock').value);
+            const ventes = parseInt(document.getElementById('visit-ventes').value);
+            const problemes = document.getElementById('visit-problemes').value;
+            if (isNaN(stock) || isNaN(ventes)) return toast('Stock et ventes obligatoires');
+            try {
+                await fetch(`/api/pdvs/${selectedPdvId}/visite`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ stock, ventes, problemes })
+                });
+                const pdv = pdvs.find(p => p.id === selectedPdvId);
+                const msg = `*Visite Canal+*\nPDV: ${pdv.nom}\nStock: ${stock}\nVentes: ${ventes}\nProblèmes: ${problemes || 'RAS'}`;
+                if (type === 'whatsapp') {
+                    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                } else {
+                    window.open(`mailto:?subject=Visite ${pdv.nom}&body=${encodeURIComponent(msg)}`, '_blank');
+                }
+                hideModal('modal-visit');
+                loadData();
+                toast('Visite enregistrée!');
+            } catch (e) { toast('Erreur'); }
+        }
+
+        function calculerItineraire() {
+            if (!currentLat) return toast('Active le GPS d\'abord');
+            const nonVisites = pdvs.filter(p =>!p.visite);
+            if (!nonVisites.length) return toast('Tous les PDV sont visités!');
+            let plusProche = nonVisites[0];
+            let distMin = Infinity;
+            nonVisites.forEach(p => {
+                const d = Math.sqrt(Math.pow(p.lat - currentLat, 2) + Math.pow(p.lng - currentLng, 2));
+                if (d < distMin) { distMin = d; plusProche = p; }
+            });
+            if (routingControl) map.removeControl(routingControl);
+            routingControl = L.Routing.control({
+                waypoints: [L.latLng(currentLat, currentLng), L.latLng(plusProche.lat, plusProche.lng)],
+                routeWhileDragging: false,
+                show: false,
+                lineOptions: { styles: [{ color: '#FF0000', weight: 6 }] }
+            }).addTo(map);
+            toast(`Route vers ${plusProche.nom}`);
+        }
+
+        async function envoyerCRGlobal() {
+            const zone = document.getElementById('cr-zone').value.trim();
+            const vendeur = document.getElementById('cr-vendeur').value.trim();
+            const comment = document.getElementById('cr-comment').value.trim();
+            if (!zone) return toast('Zone obligatoire');
+            const stats = {
+                total: pdvs.length,
+                visites: pdvs.filter(p => p.visite).length,
+                stock: pdvs.reduce((s, p) => s + (p.stock || 0), 0),
+                ventes: pdvs.reduce((s, p) => s + (p.ventes || 0), 0),
+                ruptures: pdvs.filter(p => p.stock === 0).map(p => p.nom).join(', ') || 'Aucune'
+            };
+            const msg = `*CR Tournée Canal+*\nZone: ${zone}\nVendeur: ${vendeur}\n\n*Stats:*\nPDV visités: ${stats.visites}/${stats.total}\nStock total: ${stats.stock}\nVentes total: ${stats.ventes}\nRuptures: ${stats.ruptures}\n\n*Commentaire:*\n${comment || 'RAS'}`;
+            window.open(`mailto:?subject=CR ${zone}&body=${encodeURIComponent(msg)}`, '_blank');
+            hideModal('modal-cr');
+            toast('CR envoyé!');
+        }
+
+        function partagerWhatsApp() {
+            const stats = {
+                total: pdvs.length,
+                visites: pdvs.filter(p => p.visite).length,
+                ruptures: pdvs.filter(p => p.stock === 0).length
+            };
+            const msg = `*Tournée Canal+*\nPDV: ${stats.visites}/${stats.total}\nRuptures: ${stats.ruptures}\nApp: ${window.location.href}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function exportExcel() {
+            const data = pdvs.map(p => ({
+                Nom: p.nom,
+                Telephone: p.tel,
+                Stock: p.stock,
+                Ventes: p.ventes || 0,
+                Visite: p.visite? 'Oui' : 'Non',
+                Derniere_Visite: p.derniere_visite || '',
+                Problemes: p.problemes || '',
+                Latitude: p.lat,
+                Longitude: p.lng
+            }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Tournee');
+            XLSX.writeFile(wb, `tournee_canal_${new Date().toISOString().split('T')[0]}.xlsx`);
+            toast('Excel exporté!');
+        }
 
         document.getElementById('btn-gps').onclick = getGPS;
         document.getElementById('btn-add').onclick = () => {

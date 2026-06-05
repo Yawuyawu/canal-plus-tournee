@@ -1,185 +1,4 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Canal+ Tournée</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #0a0a0a; color: white; }
-        #map { height: 60vh; width: 100%; }
-        .top-bar {
-            position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1000;
-            display: flex; justify-content: space-between;
-        }
-        .btn {
-            background: white; border: none; padding: 12px 20px;
-            border-radius: 25px; font-weight: bold; cursor: pointer;
-            margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-        }
-        .btn-route { background: #FFD700; }
-        .pdv-count {
-            background: black; color: white; padding: 12px 24px;
-            border-radius: 25px; font-weight: bold; font-size: 18px;
-        }
-        .controls { display: flex; flex-direction: column; }
-        
-        .liste-container {
-            background: #1a1a1a; padding: 15px; height: 40vh; overflow-y: auto;
-        }
-        .liste-container h3 { margin-bottom: 10px; color: white; }
-        .pdv-item {
-            background: #0a0a0a; padding: 12px; margin-bottom: 10px;
-            border-radius: 10px; border-left: 4px solid #00BFFF;
-        }
-        .pdv-item b { color: #FFD700; }
-        .btn-share {
-            width: 100%; padding: 15px; margin-top: 10px;
-            border: none; border-radius: 10px; font-weight: bold; font-size: 16px;
-            cursor: pointer;
-        }
-        .btn-whatsapp { background: #00FF00; color: black; }
-        .btn-mail { background: #FF00FF; color: white; }
-        
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.9); z-index: 2000; padding: 15px; overflow-y: auto;
-        }
-        .modal-content {
-            background: #1a1a1a; max-width: 500px; margin: 10px auto;
-            padding: 20px; border-radius: 15px; border: 1px solid #333;
-        }
-        .modal input, .modal textarea {
-            width: 100%; padding: 12px; margin-bottom: 8px;
-            border: 1px solid #444; border-radius: 8px; background: #0a0a0a;
-            color: white; font-size: 15px;
-        }
-        .modal-buttons { display: flex; gap: 8px; margin-top: 15px; }
-        .btn-green { background: #00FF00; color: black; flex: 1; }
-        .btn-cyan { background: #00FFFF; color: black; flex: 1; }
-        .btn-red { background: #FF0000; flex: 1; }
-        
-        .toast {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: #FF00FF; color: white; padding: 15px 25px; border-radius: 10px;
-            z-index: 3000; display: none; font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-    <div id="map"></div>
-    
-    <div class="top-bar">
-        <div class="controls">
-            <button class="btn" id="btn-gps">📍 GPS</button>
-            <button class="btn" id="btn-add">+ AJOUTER</button>
-            <button class="btn btn-route" id="btn-route">🧭 ITINÉRAIRE</button>
-        </div>
-        <div class="pdv-count" id="pdv-count">0 PDV</div>
-    </div>
-
-    <div class="liste-container">
-        <h3>Avancement: <span id="avancement">0/0</span> PDV visités</h3>
-        <div id="pdv-list"></div>
-        <button class="btn-share btn-whatsapp" id="btn-share-wa">📱 PARTAGER WHATSAPP</button>
-        <button class="btn-share btn-mail" id="btn-send-cr">📧 ENVOYER COMPTE RENDU AU BOSS</button>
-    </div>
-
-    <div class="modal" id="modal-cr">
-        <div class="modal-content">
-            <h2>Envoyer Compte Rendu</h2>
-            <input type="text" id="cr-nom" placeholder="Nom Agent" value="Armel">
-            <input type="email" id="cr-email-from" placeholder="Ton email" value="guigmapokoarmel@gmail.com">
-            <input type="password" id="cr-password" placeholder="Mot de passe d'app">
-            <small>Outlook: Activer 2FA + mot de passe d'app</small>
-            <input type="email" id="cr-email-to" placeholder="Email du boss" value="armel.guigma@canal-plus.com">
-            <input type="number" id="cr-stock" placeholder="Stock PDV">
-            <input type="number" id="cr-credit" placeholder="Crédit FCFA">
-            <input type="number" id="cr-recrut" placeholder="Recrutement">
-            <input type="number" id="cr-reab" placeholder="Réabonnement">
-            <textarea id="cr-comment" rows="3" placeholder="Commentaire général..."></textarea>
-            <div class="modal-buttons">
-                <button class="btn btn-green" id="btn-whatsapp">📱 WHATSAPP</button>
-                <button class="btn btn-cyan" id="btn-envoyer">📧 ENVOYER</button>
-                <button class="btn btn-red" id="btn-annuler">ANNULER</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="toast" id="toast"></div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        const API_URL = '/api/points';
-        const API_MAIL = '/api/tournee-mail';
-        let points = 0;
-        let map;
-        let myMarker;
-        let pdvList = [];
-        let currentLat = 0, currentLon = 0;
-
-        function toast(msg) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 3000);
-        }
-
-        async function loadData() {
-            try {
-                const res = await fetch(API_URL);
-                const data = await res.json();
-                points = data.points;
-                pdvList = data.pdvList || [];
-                document.getElementById('pdv-count').textContent = points + ' PDV';
-                updateListePDV();
-            } catch (e) {
-                toast('Erreur réseau');
-            }
-        }
-
-        function initMap() {
-            map = L.map('map').setView([6.3728, 2.3544], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        }
-
-        function getGPS() {
-            navigator.geolocation.getCurrentPosition(pos => {
-                currentLat = pos.coords.latitude;
-                currentLon = pos.coords.longitude;
-                map.setView([currentLat, currentLon], 16);
-                if (myMarker) map.removeLayer(myMarker);
-                myMarker = L.marker([currentLat, currentLon]).addTo(map).bindPopup('TOI').openPopup();
-            }, () => toast('Erreur GPS'));
-        }
-
-        function showModal() {
-            document.getElementById('modal-cr').style.display = 'block';
-        }
-
-        function hideModal() {
-            document.getElementById('modal-cr').style.display = 'none';
-        }
-
-        function updateListePDV() {
-            const container = document.getElementById('pdv-list');
-            container.innerHTML = '';
-            pdvList.forEach(p => {
-                const div = document.createElement('div');
-                div.className = 'pdv-item';
-                div.innerHTML = `
-                    <b>${p.nom}</b> - ${p.date}<br>
-                    Stock: ${p.stock} | Crédit: ${p.credit} FCFA<br>
-                    Recrut: ${p.recrut} | Réab: ${p.reab}<br>
-                    <small>${p.commentaire}</small>
-                `;
-                container.appendChild(div);
-            });
-            document.getElementById('avancement').textContent = `${pdvList.length}/${points}`;
-        }
-
-        async function envoyerCR() {
+        async function envoyerCRGlobal() {
             const data = {
                 agent: document.getElementById('cr-nom').value,
                 senderEmail: document.getElementById('cr-email-from').value,
@@ -190,15 +9,12 @@
                 nbRecrutement: document.getElementById('cr-recrut').value,
                 nbReabo: document.getElementById('cr-reab').value,
                 crTexte: document.getElementById('cr-comment').value,
-                visited: pdvList.length,
+                visited: pdvList.filter(p => p.visited).length,
                 total: points,
                 listHtml: document.getElementById('pdv-list').innerHTML
             };
 
-            if (!data.senderPass) {
-                toast('Mot de passe d\'app requis !');
-                return;
-            }
+            if (!data.senderPass) return toast('Mot de passe d\'app requis!');
 
             try {
                 const res = await fetch(API_MAIL, {
@@ -208,8 +24,8 @@
                 });
                 const result = await res.json();
                 if (result.ok) {
-                    toast('CR envoyé au boss !');
-                    hideModal();
+                    toast('CR global envoyé!');
+                    hideModal('modal-cr');
                 } else {
                     toast('Erreur: ' + result.mail);
                 }
@@ -218,44 +34,56 @@
             }
         }
 
-        function ajouterPDV() {
-            const nom = prompt('Nom du PDV :');
-            if (!nom) return;
-            const stock = prompt('Stock PDV :') || '0';
-            const credit = prompt('Crédit FCFA :') || '0';
-            const recrut = prompt('Recrutement :') || '0';
-            const reab = prompt('Réabonnement :') || '0';
-            const commentaire = prompt('Commentaire :') || '';
-            
-            const pdv = { nom, stock, credit, recrut, reab, commentaire, date: new Date().toLocaleString('fr-FR') };
-            points++;
-            pdvList.unshift(pdv);
-            
-            fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ points, pdv })
-            });
-            
-            document.getElementById('pdv-count').textContent = points + ' PDV';
-            updateListePDV();
-            toast('PDV ajouté !');
-        }
-
         function partagerWhatsApp() {
-            const msg = `*Résumé Tournée Canal+*%0A${pdvList.length}/${points} PDV visités%0A%0A${pdvList.map(p=>`- ${p.nom}: Stock ${p.stock}`).join('%0A')}`;
+            const visited = pdvList.filter(p => p.visited).length;
+            const msg = `*Résumé Tournée Canal+*%0A${visited}/${points} PDV visités%0A%0A${pdvList.map(p=>`${p.visited?'✅':'⏳'} ${p.nom}: ${p.phone} - Stock ${p.stock || 0}${(parseInt(p.stock)||0)<10?' ⚠️':''}`).join('%0A')}`;
             window.open(`https://wa.me/?text=${msg}`, '_blank');
         }
 
+        function exportExcel() {
+            window.open(API_EXCEL, '_blank');
+            toast('Export Excel lancé');
+        }
+
+        function toggleStats() {
+            const dash = document.getElementById('dashboard');
+            dash.style.display = dash.style.display === 'grid'? 'none' : 'grid';
+            if (dash.style.display === 'grid') updateDashboard();
+        }
+
+        document.getElementById('visit-photo').onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    currentPhotoBase64 = ev.target.result;
+                    document.getElementById('photo-preview').src = currentPhotoBase64;
+                    document.getElementById('photo-preview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
         document.getElementById('btn-gps').onclick = getGPS;
-        document.getElementById('btn-add').onclick = ajouterPDV;
-        document.getElementById('btn-route').onclick = () => toast('Itinéraire bientôt');
-        document.getElementById('btn-send-cr').onclick = showModal;
-        document.getElementById('btn-annuler').onclick = hideModal;
-        document.getElementById('btn-envoyer').onclick = envoyerCR;
+        document.getElementById('btn-add').onclick = () => {
+            if (!currentLat) return toast('Active le GPS d\'abord pour avoir ta position!');
+            showModal('modal-add');
+        };
+        document.getElementById('btn-route').onclick = calculerItineraire;
+        document.getElementById('btn-stats').onclick = toggleStats;
+        document.getElementById('btn-send-cr').onclick = () => showModal('modal-cr');
+        document.getElementById('btn-cancel-add').onclick = () => hideModal('modal-add');
+        document.getElementById('btn-save-pdv').onclick = sauverPDV;
+        document.getElementById('btn-cancel-visit').onclick = () => hideModal('modal-visit');
+        document.getElementById('btn-wa-visit').onclick = () => envoyerVisite('whatsapp');
+        document.getElementById('btn-mail-visit').onclick = () => envoyerVisite('mail');
+        document.getElementById('btn-annuler').onclick = () => hideModal('modal-cr');
+        document.getElementById('btn-envoyer').onclick = envoyerCRGlobal;
         document.getElementById('btn-whatsapp').onclick = partagerWhatsApp;
         document.getElementById('btn-share-wa').onclick = partagerWhatsApp;
+        document.getElementById('btn-excel').onclick = exportExcel;
 
+        window.openVisitModal = openVisitModal;
         window.onload = () => {
             initMap();
             loadData();

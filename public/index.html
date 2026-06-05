@@ -8,56 +8,27 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: #0a0a0a; color: white; }
-        #map { height: 50vh; width: 100%; }
+        #map { height: 60vh; width: 100%; }
         .top-bar {
             position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1000;
             display: flex; justify-content: space-between;
         }
         .btn {
-            background: #FFD700; border: none; padding: 12px 20px;
+            background: white; border: none; padding: 12px 20px;
             border-radius: 25px; font-weight: bold; cursor: pointer;
             margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
         }
-        .btn-route { background: #00FF88; }
+        .btn-route { background: #FFD700; }
         .pdv-count {
-            background: #00BFFF; color: white; padding: 12px 24px;
+            background: black; color: white; padding: 12px 24px;
             border-radius: 25px; font-weight: bold; font-size: 18px;
         }
         .controls { display: flex; flex-direction: column; }
-        .route-info {
-            background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px;
-            margin-bottom: 10px; font-size: 14px;
-        }
         
-        /* MODAL CR */
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.9); z-index: 2000; padding: 15px;
-            overflow-y: auto;
-        }
-        .modal-content {
-            background: #1a1a1a; max-width: 500px; margin: 10px auto;
-            padding: 20px; border-radius: 15px; border: 1px solid #333;
-        }
-        .modal h2 { margin-bottom: 15px; color: #00BFFF; }
-        .modal input, .modal textarea {
-            width: 100%; padding: 12px; margin-bottom: 8px;
-            border: 1px solid #444; border-radius: 8px; background: #0a0a0a;
-            color: white; font-size: 15px;
-        }
-        .modal small { color: #888; font-size: 11px; display: block; margin: -5px 0 8px; }
-        .modal-row { display: flex; gap: 8px; }
-        .modal-row input { flex: 1; }
-        .modal-buttons { display: flex; gap: 8px; margin-top: 15px; }
-        .btn-green { background: #00FF00; color: black; flex: 1; }
-        .btn-cyan { background: #00FFFF; color: black; flex: 1; }
-        .btn-red { background: #FF0000; flex: 1; }
-        
-        /* LISTE PDV */
         .liste-container {
-            background: #1a1a1a; padding: 15px; height: 50vh; overflow-y: auto;
+            background: #1a1a1a; padding: 15px; height: 40vh; overflow-y: auto;
         }
-        .liste-container h3 { margin-bottom: 10px; color: #00BFFF; }
+        .liste-container h3 { margin-bottom: 10px; color: white; }
         .pdv-item {
             background: #0a0a0a; padding: 12px; margin-bottom: 10px;
             border-radius: 10px; border-left: 4px solid #00BFFF;
@@ -71,6 +42,24 @@
         .btn-whatsapp { background: #00FF00; color: black; }
         .btn-mail { background: #FF00FF; color: white; }
         
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9); z-index: 2000; padding: 15px; overflow-y: auto;
+        }
+        .modal-content {
+            background: #1a1a1a; max-width: 500px; margin: 10px auto;
+            padding: 20px; border-radius: 15px; border: 1px solid #333;
+        }
+        .modal input, .modal textarea {
+            width: 100%; padding: 12px; margin-bottom: 8px;
+            border: 1px solid #444; border-radius: 8px; background: #0a0a0a;
+            color: white; font-size: 15px;
+        }
+        .modal-buttons { display: flex; gap: 8px; margin-top: 15px; }
+        .btn-green { background: #00FF00; color: black; flex: 1; }
+        .btn-cyan { background: #00FFFF; color: black; flex: 1; }
+        .btn-red { background: #FF0000; flex: 1; }
+        
         .toast {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             background: #FF00FF; color: white; padding: 15px 25px; border-radius: 10px;
@@ -83,41 +72,32 @@
     
     <div class="top-bar">
         <div class="controls">
-            <div class="route-info" id="route-info" style="display:none;">
-                <div id="route-dist">214.0 m, 30 s</div>
-                <div id="route-steps">Head north<br>Turn left</div>
-            </div>
             <button class="btn" id="btn-gps">📍 GPS</button>
-            <button class="btn" id="btn-add">+ ADD</button>
-            <button class="btn btn-route" id="btn-route">🗺️ ROUTE</button>
+            <button class="btn" id="btn-add">+ AJOUTER</button>
+            <button class="btn btn-route" id="btn-route">🧭 ITINÉRAIRE</button>
         </div>
-        <div class="pdv-count" id="pdv-count">1 PDV</div>
+        <div class="pdv-count" id="pdv-count">0 PDV</div>
     </div>
 
     <div class="liste-container">
         <h3>Avancement: <span id="avancement">0/0</span> PDV visités</h3>
         <div id="pdv-list"></div>
         <button class="btn-share btn-whatsapp" id="btn-share-wa">📱 PARTAGER WHATSAPP</button>
-        <button class="btn-share btn-mail" id="btn-send-boss">📧 ENVOYER COMPTE RENDU AU BOSS</button>
+        <button class="btn-share btn-mail" id="btn-send-cr">📧 ENVOYER COMPTE RENDU AU BOSS</button>
     </div>
 
-    <!-- MODAL COMPTE RENDU -->
     <div class="modal" id="modal-cr">
         <div class="modal-content">
             <h2>Envoyer Compte Rendu</h2>
-            <input type="text" id="cr-nom" placeholder="Nom" value="Armel">
+            <input type="text" id="cr-nom" placeholder="Nom Agent" value="Armel">
             <input type="email" id="cr-email-from" placeholder="Ton email" value="guigmapokoarmel@gmail.com">
             <input type="password" id="cr-password" placeholder="Mot de passe d'app">
-            <small>Outlook: Activer 2FA + mot de passe d'app<br>Google: Sécurité > Mots de passe des applications</small>
+            <small>Outlook: Activer 2FA + mot de passe d'app</small>
             <input type="email" id="cr-email-to" placeholder="Email du boss" value="armel.guigma@canal-plus.com">
-            <div class="modal-row">
-                <input type="number" id="cr-stock" placeholder="Stock PDV">
-                <input type="number" id="cr-credit" placeholder="Crédit FCFA">
-            </div>
-            <div class="modal-row">
-                <input type="number" id="cr-recrut" placeholder="Recrutement">
-                <input type="number" id="cr-reab" placeholder="Réabonnement">
-            </div>
+            <input type="number" id="cr-stock" placeholder="Stock PDV">
+            <input type="number" id="cr-credit" placeholder="Crédit FCFA">
+            <input type="number" id="cr-recrut" placeholder="Recrutement">
+            <input type="number" id="cr-reab" placeholder="Réabonnement">
             <textarea id="cr-comment" rows="3" placeholder="Commentaire général..."></textarea>
             <div class="modal-buttons">
                 <button class="btn btn-green" id="btn-whatsapp">📱 WHATSAPP</button>
@@ -155,12 +135,12 @@
                 document.getElementById('pdv-count').textContent = points + ' PDV';
                 updateListePDV();
             } catch (e) {
-                toast('Erreur réseau : Backend coupé ?');
+                toast('Erreur réseau');
             }
         }
 
         function initMap() {
-            map = L.map('map').setView([6.3728, 2.3544], 13); // Porto-Novo
+            map = L.map('map').setView([6.3728, 2.3544], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         }
 
@@ -171,7 +151,6 @@
                 map.setView([currentLat, currentLon], 16);
                 if (myMarker) map.removeLayer(myMarker);
                 myMarker = L.marker([currentLat, currentLon]).addTo(map).bindPopup('TOI').openPopup();
-                document.getElementById('route-info').style.display = 'block';
             }, () => toast('Erreur GPS'));
         }
 
@@ -202,20 +181,21 @@
 
         async function envoyerCR() {
             const data = {
-                nom: document.getElementById('cr-nom').value,
-                emailFrom: document.getElementById('cr-email-from').value,
-                password: document.getElementById('cr-password').value,
-                emailTo: document.getElementById('cr-email-to').value,
-                stock: document.getElementById('cr-stock').value,
-                credit: document.getElementById('cr-credit').value,
-                recrut: document.getElementById('cr-recrut').value,
-                reab: document.getElementById('cr-reab').value,
-                commentaire: document.getElementById('cr-comment').value,
-                lat: currentLat,
-                lon: currentLon
+                agent: document.getElementById('cr-nom').value,
+                senderEmail: document.getElementById('cr-email-from').value,
+                senderPass: document.getElementById('cr-password').value,
+                bossEmail: document.getElementById('cr-email-to').value,
+                stockPdv: document.getElementById('cr-stock').value,
+                creditPdv: document.getElementById('cr-credit').value,
+                nbRecrutement: document.getElementById('cr-recrut').value,
+                nbReabo: document.getElementById('cr-reab').value,
+                crTexte: document.getElementById('cr-comment').value,
+                visited: pdvList.length,
+                total: points,
+                listHtml: document.getElementById('pdv-list').innerHTML
             };
 
-            if (!data.password) {
+            if (!data.senderPass) {
                 toast('Mot de passe d\'app requis !');
                 return;
             }
@@ -227,55 +207,54 @@
                     body: JSON.stringify(data)
                 });
                 const result = await res.json();
-                if (result.success) {
+                if (result.ok) {
                     toast('CR envoyé au boss !');
                     hideModal();
-                    points++;
-                    pdvList.unshift({ ...data, date: new Date().toLocaleString('fr-FR') });
-                    document.getElementById('pdv-count').textContent = points + ' PDV';
-                    updateListePDV();
-                    // Save to backend
-                    await fetch(API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ points, pdv: data })
-                    });
                 } else {
-                    toast('Erreur: ' + result.error);
+                    toast('Erreur: ' + result.mail);
                 }
             } catch (e) {
-                toast('Erreur réseau: Unexpected token');
+                toast('Erreur réseau');
             }
         }
 
+        function ajouterPDV() {
+            const nom = prompt('Nom du PDV :');
+            if (!nom) return;
+            const stock = prompt('Stock PDV :') || '0';
+            const credit = prompt('Crédit FCFA :') || '0';
+            const recrut = prompt('Recrutement :') || '0';
+            const reab = prompt('Réabonnement :') || '0';
+            const commentaire = prompt('Commentaire :') || '';
+            
+            const pdv = { nom, stock, credit, recrut, reab, commentaire, date: new Date().toLocaleString('fr-FR') };
+            points++;
+            pdvList.unshift(pdv);
+            
+            fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ points, pdv })
+            });
+            
+            document.getElementById('pdv-count').textContent = points + ' PDV';
+            updateListePDV();
+            toast('PDV ajouté !');
+        }
+
         function partagerWhatsApp() {
-            const data = {
-                nom: document.getElementById('cr-nom').value,
-                stock: document.getElementById('cr-stock').value,
-                credit: document.getElementById('cr-credit').value,
-                recrut: document.getElementById('cr-recrut').value,
-                reab: document.getElementById('cr-reab').value,
-                comment: document.getElementById('cr-comment').value
-            };
-            const msg = `*CR Tournée Canal+*%0A%0A*Commercial:* ${data.nom}%0A*Stock PDV:* ${data.stock}%0A*Crédit:* ${data.credit} FCFA%0A*Recrutement:* ${data.recrut}%0A*Réabonnement:* ${data.reab}%0A*Commentaire:* ${data.comment}%0A*GPS:* ${currentLat},${currentLon}`;
+            const msg = `*Résumé Tournée Canal+*%0A${pdvList.length}/${points} PDV visités%0A%0A${pdvList.map(p=>`- ${p.nom}: Stock ${p.stock}`).join('%0A')}`;
             window.open(`https://wa.me/?text=${msg}`, '_blank');
         }
 
-        // EVENTS
         document.getElementById('btn-gps').onclick = getGPS;
-        document.getElementById('btn-add').onclick = showModal;
-        document.getElementById('btn-route').onclick = () => {
-            document.getElementById('route-info').style.display = 'block';
-            toast('Itinéraire activé');
-        };
+        document.getElementById('btn-add').onclick = ajouterPDV;
+        document.getElementById('btn-route').onclick = () => toast('Itinéraire bientôt');
+        document.getElementById('btn-send-cr').onclick = showModal;
         document.getElementById('btn-annuler').onclick = hideModal;
         document.getElementById('btn-envoyer').onclick = envoyerCR;
         document.getElementById('btn-whatsapp').onclick = partagerWhatsApp;
-        document.getElementById('btn-send-boss').onclick = showModal;
-        document.getElementById('btn-share-wa').onclick = () => {
-            const msg = `*Résumé Tournée*%0A${pdvList.length} PDV visités%0ATotal: ${points} PDV%0A%0A${pdvList.map(p=>`- ${p.nom}: ${p.stock} stock`).join('%0A')}`;
-            window.open(`https://wa.me/?text=${msg}`, '_blank');
-        };
+        document.getElementById('btn-share-wa').onclick = partagerWhatsApp;
 
         window.onload = () => {
             initMap();

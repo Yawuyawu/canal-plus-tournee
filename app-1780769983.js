@@ -52,3 +52,35 @@ window.updateCounters = function() {
 }
 
 setTimeout(loadPDV, 300);
+
+// === PATCH SAVE CLOUD MASTET V4.4.22 - NICKEL CHEF ===
+const MASTER_KEY = '$2a$10$ucVCxh7kyGTmZP1H.G3HQ0HdQGUTyWD6o7Am0byx6FDKCb2cTLO0y';
+
+async function savePDV() {
+  try {
+    const res = await fetch(BIN, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'X-Master-Key': MASTER_KEY 
+      },
+      body: JSON.stringify(window.pdvData)
+    });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    console.log('SAVE MASTET OK:', window.pdvData.length, 'PDV');
+  } catch(e) { 
+    alert('ERREUR SAVE MASTET: ' + e.message);
+  }
+}
+
+const originalPush = window.pdvData.push;
+window.pdvData.push = function(...args) {
+  const result = originalPush.apply(this, args);
+  savePDV(); 
+  if(typeof updateCounters === 'function') updateCounters();
+  if(typeof refreshMap === 'function') refreshMap();
+  return result;
+};
+
+loadPDV();
+console.log('PATCH MASTET CHARGÉ');

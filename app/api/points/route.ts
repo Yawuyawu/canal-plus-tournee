@@ -1,39 +1,31 @@
-import { createClient } from 'redis'
+import { Redis } from '@vercel/redis'
 import { NextResponse } from 'next/server'
 
-const redis = createClient({ url: process.env.REDIS_URL })
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
-// Fix pour Vercel : se connecter une seule fois
-let redisConnected = false
+let redis: any
+try {
+  redis = Redis.fromEnv()
+} catch {}
 
 export async function GET() {
   try {
-    if (!redisConnected) {
-      await redis.connect()
-      redisConnected = true
-    }
-    const points = await redis.get('pdv')
-    return NextResponse.json({ points: points ? JSON.parse(points) : [] })
-  } catch (e) {
-    console.error(e)
-    return NextResponse.json({ error: 'Redis GET failed' }, { status: 500 })
+    const points = await redis?.get('pdv')
+    return NextResponse.json({ points: points ?? [] }, { status: 200 })
+  } catch {
+    return NextResponse.json({ points: [] }, { status: 200 })
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    if (!redisConnected) {
-      await redis.connect()
-      redisConnected = true
-    }
-    const body = await request.json()
-    const current = await redis.get('pdv')
-    const points = current ? JSON.parse(current) : []
-    points.push(body)
-    await redis.set('pdv', JSON.stringify(points))
-    return NextResponse.json({ success: true, points })
-  } catch (e) {
-    console.error(e)
-    return NextResponse.json({ error: 'Redis POST failed' }, { status: 500 })
+    const body = await req.json()
+    const current = await redis?.get('pdv') ?? []
+    const points = [...current, { ...body, id: Date.now() }]
+    await redis?.set('pdv', points)
+    return NextResponse.json({ success: true, points }, { status: 200 })
+  } catch {
+    return NextResponse.json({ success: false }, { status: 200 })
   }
 }

@@ -113,3 +113,52 @@ document.addEventListener('DOMContentLoaded', () => {
   restoreLocal();
   loadPDV();
 });
+
+// 5. Modifier un PDV existant
+window.editPDV = function(index) {
+  if (IS_BOSS) return alert("Mode Boss = lecture seule");
+
+  const pdv = window.pdvData[index];
+  if(!pdv) return;
+
+  const newCredit = prompt(`Modifier CR pour ${pdv.nom || 'PDV'}:`, pdv.credit || pdv.stock_deco || 0);
+  if(newCredit === null) return; // annulé
+
+  const newStock = prompt(`Modifier Stock pour ${pdv.nom || 'PDV'}:`, pdv.stock || pdv.stock_deco || 0);
+  if(newStock === null) return;
+
+  const newVentes = prompt(`Modifier Ventes pour ${pdv.nom || 'PDV'}:`, pdv.ventes || 0);
+  if(newVentes === null) return;
+
+  // Update
+  window.pdvData[index].credit = parseInt(newCredit) || 0;
+  window.pdvData[index].stock = parseInt(newStock) || 0;
+  window.pdvData[index].ventes = parseInt(newVentes) || 0;
+
+  backupLocal();
+  updateCounters();
+  if(window.refreshMap) window.refreshMap();
+
+  // Auto-save
+  savePDV();
+}
+
+// 6. Ajoute les boutons Edit sur chaque marker PDV
+const oldRenderMarkers = window.renderMarkers || function(){};
+window.renderMarkers = function() {
+  oldRenderMarkers();
+
+  // Si t'utilises Leaflet/Google Maps, adapte ici
+  // Exemple: ajoute un popup avec bouton Edit
+  if(window.pdvMarkers) {
+    window.pdvMarkers.forEach((marker, i) => {
+      marker.bindPopup(`
+        <b>${window.pdvData[i].nom || 'PDV'}</b><br>
+        CR: ${window.pdvData[i].credit || 0}<br>
+        Stock: ${window.pdvData[i].stock || 0}<br>
+        Ventes: ${window.pdvData[i].ventes || 0}<br>
+        <button onclick="editPDV(${i})" style="margin-top:5px;padding:5px 10px;background:#2196F3;color:white;border:none;border-radius:4px">✏️ Modifier</button>
+      `);
+    });
+  }
+}

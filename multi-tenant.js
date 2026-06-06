@@ -184,3 +184,54 @@ window.editPDV = function(index) {
   savePDV();
   alert("PDV modifié + sauvé");
 }
+
+// V4.4.9 - Markers avec nom PDV + bouton Edit dans popup
+window.createPDVMarker = function(pdv, index) {
+  const nom = pdv.nom || 'PDV';
+  const initiales = nom.substring(0, 2).toUpperCase();
+  
+  // Icon avec initiales au lieu du stock
+  const icon = L.divIcon({
+    html: `<div style="background:#c62828;color:white;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:bold;border:2px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.3)">${initiales}</div>`,
+    className: '',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+  });
+
+  const marker = L.marker([pdv.lat, pdv.lng], { icon: icon }).addTo(map);
+  
+  // Popup avec bouton Modifier
+  marker.bindPopup(`
+    <div style="min-width:150px">
+      <b>${pdv.nom || 'HOME'}</b><br>
+      📞 ${pdv.tel || '-'}<br>
+      📦 Stock: ${pdv.stock || pdv.stock_deco || 0}<br>
+      💳 CR: ${pdv.credit || 0}<br>
+      📍 ${pdv.ville || '-'}<br>
+      👤 ${pdv.resp || '-'}<br>
+      <div style="margin-top:8px;display:flex;gap:5px">
+        <button onclick="editPDV(${index})" style="flex:1;padding:6px;background:#2196F3;color:white;border:none;border-radius:4px;font-size:12px">✏️ Modifier</button>
+        <button onclick="deletePDV(${index})" style="padding:6px;background:#424242;color:white;border:none;border-radius:4px">🗑️</button>
+      </div>
+    </div>
+  `);
+  
+  return marker;
+}
+
+// Remplace l'ancienne fonction de rendu des markers
+const oldRefreshMap = window.refreshMap || function(){};
+window.refreshMap = function() {
+  if(!window.map) return;
+  // Clear anciens markers
+  if(window.pdvMarkers) window.pdvMarkers.forEach(m => map.removeLayer(m));
+  window.pdvMarkers = [];
+  
+  // Crée nouveaux markers avec nom
+  window.pdvData.forEach((pdv, i) => {
+    if(pdv.lat && pdv.lng) {
+      const marker = createPDVMarker(pdv, i);
+      window.pdvMarkers.push(marker);
+    }
+  });
+}

@@ -4,12 +4,10 @@ console.log('V4.4.22 LIVE');
 const BIN = 'https://api.jsonbin.io/v3/b/6a245702f5f4af5e29c32b19';
 window.pdvData = [];
 
-// Kill cluster
 if(window.L && window.L.markerClusterGroup) {
   window.L.markerClusterGroup = function(){ return L.layerGroup(); };
 }
 
-// Ta position
 navigator.geolocation.getCurrentPosition(pos => {
   window.userPos = [pos.coords.latitude, pos.coords.longitude];
   if(window.map) {
@@ -22,7 +20,6 @@ navigator.geolocation.getCurrentPosition(pos => {
   }
 });
 
-// Charge JSONBin
 async function loadPDV() {
   const res = await fetch(BIN + '/latest?t=' + Date.now(), {cache: 'no-store'});
   const json = await res.json();

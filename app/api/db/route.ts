@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { redis } from '@/lib/redis'
 
+export const runtime = 'nodejs'
+
 const KEY = 'canal-tournee'
 
 export async function GET() {

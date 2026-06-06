@@ -6,4 +6,4 @@ const globalForRedis = globalThis as unknown as {
 
 export const redis = globalForRedis.redis ?? new Redis(process.env.REDIS_URL!)
 
-if (process.env.NODE_ENV !== 'production') globalForRedis.redis = redis0
+if (process.env.NODE_ENV !== 'production') globalForRedis.redis = redis

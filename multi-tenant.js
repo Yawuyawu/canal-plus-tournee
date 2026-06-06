@@ -1,70 +1,50 @@
-// V4.4.18 - No auto wipe + Safe load
-console.log('V4.4.18 SAFE');
+// V4.4.20 - BLOQUE CHIFFRES + INITIALES ONLY
+console.log('V4.4.20 NO NUMBERS');
 
 const BIN = 'https://api.jsonbin.io/v3/b/6a245702f5f4af5e29c32b19';
 window.pdvData = [];
-let firstLoad = true;
 
-if('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(r => r.forEach(sw => sw.unregister()));
-}
+// Anti-cluster : si un plugin existe on le tue
+window.L = window.L || {};
+if(window.L.markerClusterGroup) window.L.markerClusterGroup = function(){ return L.layerGroup(); };
 
 async function loadPDV() {
-  try {
-    const res = await fetch(BIN + '/latest?t=' + Date.now(), {cache: 'no-store'});
-    const json = await res.json();
-    window.pdvData = json.record || [];
-    console.log('CLOUD DATA:', window.pdvData);
-  } catch(e) { 
-    console.log('CLOUD FAIL:', e);
-    window.pdvData = [];
-  }
-  firstLoad = false;
-  refreshMap();
-  updateCounters();
-}
-
-window.savePDV = async function() {
-  if(firstLoad && window.pdvData.length === 0) {
-    console.log('BLOCK: refuse save array vide au load');
-    return;
-  }
-  const res = await fetch(BIN, {
-    method: 'PUT',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(window.pdvData)
-  });
-  alert('SAVE OK: ' + window.pdvData.length + ' PDV');
+  const res = await fetch(BIN + '/latest?t=' + Date.now(), {cache: 'no-store'});
+  const json = await res.json();
+  window.pdvData = json.record || [];
+  console.log('DATA:', window.pdvData);
   refreshMap();
   updateCounters();
 }
 
 window.refreshMap = function() {
   if(!window.map) return;
-  window.map.eachLayer(layer => {
-    if(layer instanceof L.Marker || layer instanceof L.MarkerClusterGroup) {
-      window.map.removeLayer(layer);
-    }
+  
+  // Nuke TOUT : markers + clusters + layers
+  window.map.eachLayer(l => {
+    if(l._leaflet_id !== window.map._leaflet_id) window.map.removeLayer(l);
   });
+  
   window.pdvData.forEach(pdv => {
     if(!pdv.lat || !pdv.lng) return;
-    const initials = pdv.nom ? pdv.nom.substring(0,2).toUpperCase() : '??';
+    
+    // INITIALES SEULEMENT, JAMAIS DE CHIFFRE
+    const initials = pdv.nom ? pdv.nom.replace(/[^A-Za-z]/g, '').substring(0,2).toUpperCase() : 'XX';
+    
     const icon = L.divIcon({
-      className: 'pdv-initiales',
-      html: `<div style="background:#dc2626;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:bold;border:2px solid white;font-size:12px">${initials}</div>`,
-      iconSize: [32, 32], iconAnchor: [16, 16]
+      className: 'pdv-no-number',
+      html: `<div style="background:#dc2626;color:white;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-weight:bold;border:3px solid white;font-size:13px;box-shadow:0 2px 5px rgba(0,0,0,0.3)">${initials}</div>`,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17]
     });
-    L.marker([pdv.lat, pdv.lng], {icon: icon})
-      .addTo(window.map)
-      .bindPopup(`<b>${pdv.nom}</b><br>Stock: ${pdv.stock || 0}`);
+    
+    L.marker([pdv.lat, pdv.lng], {icon: icon, title: pdv.nom}).addTo(window.map);
   });
 }
 
 window.updateCounters = function() {
-  const totalPDV = window.pdvData.length;
-  const totalStock = window.pdvData.reduce((s,p) => s + (parseInt(p.stock)||0), 0);
-  document.querySelectorAll('[data-count="pdv"]').forEach(e => e.textContent = totalPDV);
-  document.querySelectorAll('[data-count="stock"]').forEach(e => e.textContent = totalStock);
+  document.querySelectorAll('[data-count="pdv"]').forEach(e => e.textContent = window.pdvData.length);
+  document.querySelectorAll('[data-count="stock"]').forEach(e => e.textContent = window.pdvData.reduce((s,p) => s + (parseInt(p.stock)||0), 0));
 }
 
 setTimeout(loadPDV, 100);

@@ -247,3 +247,33 @@ setTimeout(async () => {
     if(typeof updateCounters === 'function') updateCounters();
   }
 }, 1500);
+
+// V4.4.11 - Debug + Save + Load
+console.log('V4.4.11 loaded');
+
+window.savePDV = async function() {
+  localStorage.setItem('pdv_backup', JSON.stringify(window.pdvData));
+  try {
+    await fetch('https://api.jsonbin.io/v3/b/6a245702f5f4af5e29c32b19', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(window.pdvData)
+    });
+    console.log('Sync JSONBin OK:', window.pdvData);
+  } catch(e) { console.log('Sync fail'); }
+  if(typeof updateCounters === 'function') updateCounters();
+  if(typeof refreshMap === 'function') refreshMap();
+}
+
+// Auto-load au start
+setTimeout(async () => {
+  const res = await fetch('https://api.jsonbin.io/v3/b/6a245702f5f4af5e29c32b19/latest');
+  const data = await res.json();
+  if(data.record && data.record.length > 0) {
+    window.pdvData = data.record;
+    localStorage.setItem('pdv_backup', JSON.stringify(window.pdvData));
+    refreshMap();
+    updateCounters();
+    console.log('Loaded from JSONBin:', window.pdvData.length, 'PDV');
+  }
+}, 1500);

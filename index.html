@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CANAL+ TOURNÉE</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif }
+    body { background:#0A0E14; color:#fff; overflow:hidden }
+    #map { height:100vh; width:100vw }
+.btn { position:absolute; z-index:1000; background:#FFF; color:#000; border:2px solid #000; padding:12px 20px; border-radius:25px; font-weight:bold; box-shadow:0 4px 15px rgba(255,255,255,0.2) }
+    #gps { top:60px; left:20px }
+    #add { top:110px; left:20px }
+    #route { top:160px; left:20px }
+    #cr-btn { top:210px; left:20px; display:none }
+    #count { top:20px; right:20px; background:#000; color:#FFF; border:2px solid #FFF }
+    #toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#FFF; color:#000; padding:12px 24px; border-radius:25px; display:none; z-index:9999; font-weight:bold; border:2px solid #000 }
+.modal { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1a1a2e; padding:15px; border-radius:15px; z-index:3000; display:none; width:90%; max-width:350px; max-height:65vh; overflow-y:auto; border:2px solid #FFF }
+.modal input,.modal select,.modal textarea { width:100%; padding:8px; margin:6px 0; border:1px solid #FFF; border-radius:8px; background:#0A0E14; color:#fff; font-size:14px }
+.modal-btns { position:sticky; bottom:0; background:#1a1a2e; padding-top:10px; display:flex; gap:6px; flex-wrap:wrap }
+.modal button { padding:10px; border:none; border-radius:8px; font-weight:bold; font-size:13px }
+.btn-third { width:calc(33% - 4px) }
+.btn-half { width:calc(50% - 3px) }
+.save { background:#FFF; color:#000 }
+.cancel { background:#000; color:#FFF; border:1px solid #FFF }
+.whatsapp { background:#FFF; color:#000 }
+.popup-btn { background:#FFF; border:1px solid #000; color:#000; padding:8px 12px; border-radius:8px; margin-top:5px; width:100%; display:block }
+.visit-btn { background:#FFF; color:#000 }
+.route-btn { background:#000; color:#FFF; border:1px solid #FFF }
+.leaflet-routing-container { background:#1a1a2e; color:#fff; width:300px; font-size:11px; max-height:35vh }
+.leaflet-routing-alt { max-height:100px; overflow-y:auto }
+#tournee-panel { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; max-height:40vh; overflow-y:auto; z-index:1000; display:none; border-top:3px solid #FFF }
+#tournee-panel table { width:100%; border-collapse:collapse; font-size:11px }
+#tournee-panel th, #tournee-panel td { padding:6px; text-align:left; border-bottom:1px solid #333 }
+#tournee-panel th { background:#0A0E14; position:sticky; top:0 }
+.mail-tournee { background:#FFF; border:none; color:#000; padding:12px; width:95%; margin:10px 2.5%; border-radius:8px; font-weight:bold }
+.whatsapp-btn { background:#000; border:1px solid #FFF; color:#FFF; padding:12px; width:95%; margin:5px 2.5%; border-radius:8px; font-weight:bold }
+.close-panel { position:absolute; top:5px; right:10px; background:#000; border:1px solid #FFF; color:#FFF; padding:5px 10px; border-radius:5px }
+   label { display:flex; align-items:center; gap:10px; margin:6px 0; font-size:14px }
+.selected { stroke:#FFF; stroke-width:4 }
+small { color:#888; font-size:10px; display:block; margin-top:-5px; margin-bottom:5px }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:6px }
+.logo { position:absolute; top:20px; left:50%; transform:translateX(-50%); z-index:1000; font-weight:bold; color:#FFF; font-size:20px; letter-spacing:2px }
+  </style>
+</head>
+<body>
+  <div class="logo">CANAL+</div>
+  <div id="map"></div>
+  <button id="gps" class="btn" onclick="getGPS()">📍 GPS</button>
+  <button id="add" class="btn" onclick="showForm('add')">+ ADD</button>
+  <button id="route" class="btn" onclick="calcRoute()">🗺️ ITINÉRAIRE</button>
+  <button id="cr-btn" class="btn" onclick="showMailTournee()">📊 CR</button>
+  <div id="count" class="btn">0 PDV</div>
+  <div id="toast"></div>
+
+  <div id="tournee-panel">
+    <button class="close-panel" onclick="closePanel()">X</button>
+    <h3 style="padding:10px; margin:0">COMPTE RENDU TOURNÉE CANAL+</h3>
+    <div id="tournee-content"></div>
+    <button type="button" class="whatsapp-btn" onclick="shareWhatsAppFromPanel()">📱 PARTAGER WHATSAPP</button>
+    <button type="button" class="mail-tournee" onclick="showMailTournee()">📧 ENVOYER COMPTE RENDU AU BOSS</button>
+  </div>
+
+  <div id="form-add" class="modal">
+    <h3>Nouveau PDV CANAL+</h3>
+    <input id="name" placeholder="Nom PDV" />
+    <select id="category">
+      <option value="">Catégorie</option>
+      <option>Kiosque</option><option>Boutique</option><option>Grossiste</option><option>Distributeur</option>
+    </select>
+    <input id="phone" placeholder="Numéro téléphone" type="tel" />
+    <input id="distributor" placeholder="Numéro distributeur" />
+    <div class="modal-btns">
+      <button class="save btn-half" onclick="savePoint()">SAUVER</button>
+      <button class="cancel btn-half" onclick="hideForm('add')">ANNULER</button>
+    </div>
+  </div>
+
+  <div id="form-visit" class="modal">
+    <h3>Rapport Visite: <span id="visit-name"></span></h3>
+    <div id="visit-dist" style="color:#FFF; margin-bottom:5px"></div>
+    <input id="agent" placeholder="Nom agent" autocomplete="off" />
+    <input id="sender-email" placeholder="Ton Email Outlook Pro" type="email" autocomplete="off" />
+    <input id="sender-pass" placeholder="Mot de passe d'app" type="password" autocomplete="new-password" />
+    <small>Non sauvegardé pour sécurité</small>
+    <input id="boss-email" placeholder="Email du boss" type="email" autocomplete="off" />
+    <textarea id="notes" placeholder="Notes de visite..." rows="3"></textarea>
+    <input id="photo" type="file" accept="image/*" capture="camera" />
+    <label><input type="checkbox" id="sendmail" checked /> Envoyer rapport + copie à moi</label>
+    <div class="modal-btns">
+      <button class="save btn-half" onclick="sendVisit()">VALIDER</button>
+      <button class="cancel btn-half" onclick="hideForm('visit')">ANNULER</button>
+    </div>
+  </div>
+
+  <div id="form-tournee-mail" class="modal">
+    <h3>Envoyer Compte Rendu CANAL+</h3>
+    <input id="agent-tournee" placeholder="Nom agent" autocomplete="off" />
+    <input id="sender-email-tournee" placeholder="Ton Email Outlook Pro" type="email" autocomplete="off" />
+    <input id="sender-pass-tournee" placeholder="Mot de passe d'app" type="password" autocomplete="new-password" />
+    <small>Tu recevras une copie automatique</small>
+    <input id="boss-email-tournee" placeholder="Email du boss" type="email" autocomplete="off" />
+    <div class="grid2">
+      <input id="stock-pdv" placeholder="Stock PDV" type="number" />
+      <input id="credit-pdv" placeholder="Crédit FCFA" type="number" />
+      <input id="nb-recrutement" placeholder="Recrutement" type="number" />
+      <input id="nb-reabo" placeholder="Réabonnement" type="number" />
+    </div>
+    <textarea id="cr-texte" placeholder="Commentaire général..." rows="3"></textarea>
+    <div class="modal-btns">
+      <button class="whatsapp btn-third" onclick="shareWhatsAppFromModal()">📱 WHATSAPP</button>
+      <button class="save btn-third" onclick="sendTourneeMail()">📧 ENVOYER</button>
+      <button class="cancel btn-third" onclick="hideForm('tournee-mail')">ANNULER</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+  <script type="module">
+    const map = L.map('map').setView([6.5, 2.6], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    let myLoc = null, markers = [], allPoints = [], routeControl = null, currentVisit = null, selectedDest = null;
+
+    window.toast = msg => {
+      const t = document.getElementById('toast');
+      t.innerText = msg; t.style.display = 'block';
+      setTimeout(() => t.style.display = 'none', 4000);
+    }
+
+    window.getGPS = () => {
+      navigator.geolocation.getCurrentPosition(p => {
+        myLoc = [p.coords.latitude, p.coords.longitude];
+        map.setView(myLoc, 13);
+        L.circleMarker(myLoc, {color:'#FFF',radius:15}).addTo(map).bindPopup('YOU').openPopup();
+        loadPoints();
+      }, () => toast('GPS refusé'));
+    }
+
+    function calcDist(lat1, lon1, lat2, lon2) {
+      return (map.distance([lat1,lon1], [lat2,lon2])/1000).toFixed(2);
+    }
+
+    async function loadPoints() {
+      if (!myLoc) return;
+      try {
+        const res = await fetch(`/api/points?lat=${myLoc[0]}&lon=${myLoc[1]}`);
+        allPoints = await res.json();
+        markers.forEach(m => map.removeLayer(m)); markers = [];
+        allPoints.forEach(p => {
+          const isSelected = selectedDest && selectedDest.id == p.id;
+          const color = p.visited? '#FFF' : '#888';
+          const dist = calcDist(myLoc[0], myLoc[1], p.lat, p.lon);
+          const html = `<b>${p.name}</b><br>Cat: ${p.category || '-'}<br>Dist: ${p.distributor || '-'}<br>Distance: ${dist} km<br>
+            <button class="popup-btn" onclick="window.open('tel:${p.phone}')">CALL ${p.phone}</button>
+            <button class="popup-btn route-btn" onclick="selectDest(${p.id})">🎯 DESTINATION</button>
+            <button class="popup-btn visit-btn" onclick="startVisit(${p.id}, '${p.name}', ${dist})">✅ VISITE</button>`;
+          const m = L.circleMarker([p.lat, p.lon], {
+            color, radius:10, fillOpacity:0.8,
+            className: isSelected? 'selected' : ''
+          }).addTo(map).bindPopup(html);
+          markers.push(m);
+        });
+        document.getElementById('count').innerText = `${allPoints.length} PDV`;
+        document.getElementById('cr-btn').style.display = allPoints.length > 0? 'block' : 'none';
+      } catch (e) {
+        toast('Erreur réseau: Backend coupé?');
+      }
+    }
+
+    window.selectDest = id => {
+      selectedDest = allPoints.find(p => p.id == id);
+      toast('Destination: ' + selectedDest.name);
+      loadPoints();
+      map.closePopup();
+    }
+
+    window.closePanel = () => document.getElementById('tournee-panel').style.display = 'none';
+
+    window.showForm = type => {
+      document.getElementById('form-'+type).style.display = 'block';
+    }
+
+    window.hideForm = type => {
+      document.getElementById('form-'+type).style.display = 'none';
+      if(type=='add') ['name','category','phone','distributor'].forEach(id => document.getElementById(id).value = '');
+      if(type=='visit') ['agent','notes','photo','sendmail','sender-email','sender-pass','boss-email'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el.type=='checkbox') el.checked = true; else el.value = '';
+      });
+      if(type=='tournee-mail') ['agent-tournee','sender-email-tournee','sender-pass-tournee','boss-email-tournee','cr-texte','stock-pdv','credit-pdv','nb-recrutement','nb-reabo'].forEach(id => document.getElementById(id).value = '');
+    }
+
+    window.savePoint = async () => {
+      const name = document.getElementById('name').value;
+      const category = document.getElementById('category').value;
+      const phone = document.getElementById('phone').value;
+      const distributor = document.getElementById('distributor').value;
+      if (!name ||!phone) return toast('Nom + Téléphone obligatoires');
+      await fetch('/api/add', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name, category, phone, distributor, lat: myLoc[0], lon: myLoc[1]})
+      });
+      hideForm('add'); toast('PDV ajouté 👑'); loadPoints();
+    }
+
+    window.startVisit = (id, name, dist) => {
+      currentVisit = {id, name, dist};
+      document.getElementById('visit-name').innerText = name;
+      document.getElementById('visit-dist').innerText = `Distance depuis GPS: ${dist} km`;
+      showForm('visit');
+    }
+
+    window.sendVisit = async () => {
+      const agent = document.getElementById('agent').value;
+      const notes = document.getElementById('notes').value;
+      const photoFile = document.getElementById('photo').files[0];
+      const sendmail = document.getElementById('sendmail').checked;
+      const senderEmail = document.getElementById('sender-email').value;
+      const senderPass = document.getElementById('sender-pass').value;
+      const bossEmail = document.getElementById('boss-email').value;
+
+      if (!agent) return toast('Nom agent obligatoire');
+      if (sendmail &&(!bossEmail ||!senderEmail ||!senderPass)) return toast('Tous les champs mail obligatoires');
+
+      let photo = '';
+      if (photoFile) {
+        photo = await new Promise(r => {
+          const reader = new FileReader();
+          reader.onload = e => r(e.target.result);
+          reader.readAsDataURL(photoFile);
+        });
+      }
+
+      try {
+        const res = await fetch('/api/visit', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            pointId: currentVisit.id,
+            pointName: currentVisit.name,
+            agent, notes, photo, sendmail, bossEmail, senderPass,
+            lat: myLoc[0], lon: myLoc[1],
+            distance: currentVisit.dist
+          })
+        });
+        const data = await res.json();
+        hideForm('visit');
+        toast(data.ok? 'Rapport envoyé: ' + data.mail : 'Erreur: ' + data.mail);
+        loadPoints();
+      } catch (e) {
+        toast('Erreur réseau: Vérifie vite.config.js');
+      }
+    }
+
+    window.calcRoute = () => {
+      if (!myLoc) return toast('Clique GPS d abord');
+      if (routeControl) map.removeControl(routeControl);
+
+      let waypoints = [L.latLng(myLoc[0], myLoc[1])];
+      let summary = 'Tournée complète';
+
+      if (selectedDest) {
+        waypoints.push(L.latLng(selectedDest.lat, selectedDest.lon));
+        summary = 'Vers: ' + selectedDest.name;
+      } else {
+        const nonVisites = allPoints.filter(p =>!p.visited).map(p => ({
+...p, dist: parseFloat(calcDist(myLoc[0], myLoc[1], p.lat, p.lon))
+        })).sort((a,b) => a.dist - b.dist);
+
+        if (nonVisites.length == 0) return toast('Tous les PDV sont visités');
+        waypoints.push(L.latLng(nonVisites[0].lat, nonVisites[0].lon));
+        summary = 'Prochain PDV: ' + nonVisites[0].name;
+      }
+
+      routeControl = L.Routing.control({
+        waypoints, routeWhileDragging: false, show: true, collapsible: true,
+        addWaypoints: false, lineOptions: {styles: [{color: '#FFF', weight: 6}]}
+      }).addTo(map);
+
+      showTourneePanel();
+      toast('Itinéraire: ' + summary);
+    }
+
+    function showTourneePanel() {
+      const visited = allPoints.filter(p => p.visited).length;
+      const total = allPoints.length;
+      let html = `<div style="padding:10px"><b>Avancement: ${visited}/${total} PDV visités</b></div>`;
+      html += '<table><tr><th>Nom PDV</th><th>Num Distributeur</th><th>Distance</th><th>État</th></tr>';
+      allPoints.forEach(p => {
+        const d = calcDist(myLoc[0], myLoc[1], p.lat, p.lon);
+        const etat = p.visited? '✅ Visité' : '⏳ À visiter';
+        html += `<tr><td>${p.name}</td><td>${p.distributor || '-'}</td><td>${d} km</td><td>${etat}</td></tr>`;
+      });
+      html += '</table>';
+      document.getElementById('tournee-content').innerHTML = html;
+      document.getElementById('tournee-panel').style.display = 'block';
+    }
+
+    function getTourneeData() {
+      const visited = allPoints.filter(p => p.visited).length;
+      const total = allPoints.length;
+      const stockPdv = document.getElementById('stock-pdv')?.value || '0';
+      const creditPdv = document.getElementById('credit-pdv')?.value || '0';
+      const nbRecrutement = document.getElementById('nb-recrutement')?.value || '0';
+      const nbReabo = document.getElementById('nb-reabo')?.value || '0';
+      const crTexte = document.getElementById('cr-texte')?.value || '';
+
+      return { visited, total, stockPdv, creditPdv, nbRecrutement, nbReabo, crTexte };
+    }
+
+    function buildWhatsAppText() {
+      const { visited, total, stockPdv, creditPdv, nbRecrutement, nbReabo, crTexte } = getTourneeData();
+      let text = `*Compte Rendu Tournée CANAL+*\n`;
+      text += `Avancement: ${visited}/${total} PDV visités\n`;
+      text += `Stock PDV: ${stockPdv}\n`;
+      text += `Crédit PDV: ${creditPdv} FCFA\n`;
+      text += `Recrutements: ${nbRecrutement}\n`;
+      text += `Réabonnements: ${nbReabo}\n\n`;
+      if (crTexte) text += `*Commentaire:*\n${crTexte}\n\n`;
+      text += `*Détail:*\n`;
+      allPoints.forEach(p => {
+        const d = calcDist(myLoc[0], myLoc[1], p.lat, p.lon);
+        const etat = p.visited? '✅' : '⏳';
+        text += `${etat} *${p.name}* - Num Dist: ${p.distributor || '-'} - ${d} km\n`;
+      });
+      return text;
+    }
+
+    window.shareWhatsAppFromPanel = () => {
+      const text = buildWhatsAppText();
+      const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+      window.open(url, '_blank');
+    }
+
+    window.shareWhatsAppFromModal = () => {
+      const text = buildWhatsAppText();
+      const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+      window.open(url, '_blank');
+    }
+
+    window.showMailTournee = () => showForm('tournee-mail');
+
+    window.sendTourneeMail = async () => {
+      const agent = document.getElementById('agent-tournee').value;
+      const senderEmail = document.getElementById('sender-email-tournee').value;
+      const senderPass = document.getElementById('sender-pass-tournee').value;
+      const bossEmail = document.getElementById('boss-email-tournee').value;
+      const crTexte = document.getElementById('cr-texte').value;
+      const stockPdv = document.getElementById('stock-pdv').value;
+      const creditPdv = document.getElementById('credit-pdv').value;
+      const nbRecrutement = document.getElementById('nb-recrutement').value;
+      const nbReabo = document.getElementById('nb-reabo').value;
+
+      if (!agent ||!bossEmail ||!senderEmail ||!senderPass) return toast('Tous les champs obligatoires');
+
+      const visited = allPoints.filter(p => p.visited).length;
+      const total = allPoints.length;
+      let listHtml = `<p><b>Avancement: ${visited}/${total} PDV visités</b></p>`;
+      listHtml += '<table border="1" cellpadding="5"><tr><th>Nom PDV</th><th>Numéro Distributeur</th><th>Distance</th><th>État</th><th>Catégorie</th></tr>';
+      allPoints.forEach(p => {
+        const d = calcDist(myLoc[0], myLoc[1], p.lat, p.lon);
+        const etat = p.visited? 'Visité' : 'À visiter';
+        listHtml += `<tr><td>${p.name}</td><td>${p.distributor || '-'}</td><td>${d} km</td><td>${etat}</td><td>${p.category || '-'}</td></tr>`;
+      });
+      listHtml += '</table>';
+
+      try {
+        const res = await fetch('/api/tournee-mail', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({agent, visited, total, listHtml, crTexte, stockPdv, creditPdv, nbRecrutement, nbReabo, bossEmail, senderEmail, senderPass})
+        });
+        const data = await res.json();
+        toast(data.ok? 'Compte rendu envoyé: ' + data.mail : 'Erreur: ' + data.mail);
+        if(data.ok) {
+          hideForm('tournee-mail');
+          closePanel();
+        }
+      } catch (e) {
+        toast('Erreur réseau: Vérifie vite.config.js');
+      }
+    }
+
+    window.onload = getGPS;
+  </script>
+</body>
+</html>

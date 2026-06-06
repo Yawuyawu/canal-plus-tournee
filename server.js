@@ -1,43 +1,59 @@
 const express = require('express');
 const fs = require('fs');
-const path = require('path');
+const http = require('http');
+const WebSocket = require('ws');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+const port = 3000;
 
 app.use(express.json());
-app.use(express.static('public'));
+let jobsDB = [];
+let requestsDB = [];
+let jobId = 0;
+const MEMORY_FILE = 'pont_memory.json';
 
-const dbPath = path.join(__dirname, 'db.json');
+if (fs.existsSync(MEMORY_FILE)) {
+  const data = JSON.parse(fs.readFileSync(MEMORY_FILE, 'utf8'));
+  jobsDB = data.jobs || [];
+  jobId = jobsDB.length > 0? Math.max(...jobsDB.map(j => j.id)) : 0;
+}
 
-// GET tous les PDV
-app.get('/api/pdvs', (req, res) => {
-  const data = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
-  res.json(data.pdvs || []);
+function saveMemory() {
+  fs.writeFileSync(MEMORY_FILE, JSON.stringify({jobs: jobsDB, requests: requestsDB}, null, 2));
+}
+
+wss.on('connection', ws => {
+  ws.send(JSON.stringify({type: 'connected'}));
 });
 
-// POST ajouter PDV
-app.post('/api/add', (req, res) => {
-  const data = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
-  const newPdv = { id: Date.now(), visite: false, ventes: 0, ...req.body };
-  data.pdvs.push(newPdv);
-  fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
-  res.json(newPdv);
+function broadcast(data) {
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) client.send(JSON.stringify(data));
+  });
+}
+
+app.post('/api/job', (req, res) => {
+  const { name, phone, lat, lon, category } = req.body;
+  jobId++;
+  const newJob = { id: jobId, name, phone, lat, lon, category, source: 'USER', date: Date.now() };
+  jobsDB.push(newJob);
+  saveMemory();
+  broadcast({type: 'new_job', data: newJob});
+  res.json({ success: true, job: newJob });
 });
 
-// POST visite
-app.post('/api/visit', (req, res) => {
-  const { pointId, stock, ventes, problemes } = req.body;
-  const data = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
-  const pdv = data.pdvs.find(p => p.id == pointId);
-  if (pdv) {
-    pdv.stock = stock;
-    pdv.ventes = ventes;
-    pdv.problemes = problemes;
-    pdv.visite = true;
-    pdv.derniere_visite = new Date().toISOString();
+app.get('/api/jobs', (req, res) => {
+  const { lat, lon } = req.query;
+  let all = [...jobsDB];
+  if (lat && lon) {
+    all = all.filter(j => {
+      const R = 6371; const dLat = (j.lat - lat) * Math.PI/180; const dLon = (j.lon - lon) * Math.PI/180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat * Math.PI/180) * Math.cos(j.lat * Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) <= 50;
+    });
   }
-  fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
-  res.json({ ok: true });
+  res.json(all);
 });
 
-app.listen(PORT, () => console.log(`Server on ${PORT}`));
+server.listen(port, () => console.log(`Backend on ${port}`));

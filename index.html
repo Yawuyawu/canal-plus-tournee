@@ -21,15 +21,13 @@
 .content { padding: 16px; padding-bottom: 80px; }
 .btn { background: #ff0000; color: white; border: none; padding: 14px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; width: 100%; margin: 12px 0; font-size: 16px; }
 .btn:active { background: #cc0000; }
-.btn-small { padding: 8px 12px; font-size: 13px; margin: 4px; width: auto; display: inline-block; }
-.btn-whatsapp { background: #25D366; }
-.btn-mail { background: #00a8ff; }
-.btn-copy { background: #2a2a2a; }
 .btn-secondary { background: #2a2a2a; }
 .btn-gps { background: #0066cc; }
 .btn-camera { background: #ff6600; }
 .btn-clear { background: #666; }
 .btn-annuler { background: #ff3333; }
+.btn-whatsapp { background: #25D366; }
+.btn-mail { background: #00a8ff; }
 .card { background: #111; border: 1px solid #2a2a2a; border-radius: 14px; padding: 16px; margin: 12px 0; }
     input, textarea, select { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 14px; border-radius: 10px; margin: 8px 0; font-size: 16px; }
     label { font-size: 14px; opacity: 0.8; margin-top: 8px; display: block; }
@@ -47,7 +45,7 @@
 .badge.credit { background: #ff9900; }
 .badge.ventes { background: #00aa00; }
 .badge.faible { background: #ff3333; animation: pulse 2s infinite; }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 .delete { background: #2a2a2a; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 18px; }
 .hidden { display: none; }
     #map { height: 400px; border-radius: 14px; margin: 12px 0; }
@@ -56,13 +54,12 @@
 .dash-card { background: #111; border: 1px solid #2a2a2a; border-radius: 14px; padding: 16px; margin: 12px 0; text-align: center; }
 .dash-num { font-size: 32px; font-weight: 800; color: #ff0000; }
 .dash-label { opacity: 0.7; font-size: 13px; margin-top: 4px; }
-.share-btns { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
 .itineraire-info { background: #111; border: 2px solid #ff0000; padding: 12px; border-radius: 10px; margin: 12px 0; }
 .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; text-align: center; }
 .info-text { font-size: 12px; opacity: 0.6; margin-top: -4px; margin-bottom: 8px; }
 .sync-badge { background: #00aa00; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 8px; }
 .photo-preview { width: 100%; border-radius: 10px; margin: 8px 0; max-height: 200px; object-fit: cover; }
- #signature-pad { border: 2px dashed #333; border-radius: 10px; background: #000; cursor: crosshair; }
+    #signature-pad { border: 2px dashed #333; border-radius: 10px; background: #000; cursor: crosshair; }
 .signature-controls { display: flex; gap: 8px; margin-top: 8px; }
   </style>
 </head>
@@ -78,15 +75,12 @@
     </div>
     <div class="status load" id="status">Synchro cloud...</div>
   </div>
-
   <div class="tabs">
     <div class="tab active" onclick="changerTab('carte')">CARTE</div>
     <div class="tab" onclick="changerTab('pdv')">PDV</div>
     <div class="tab" onclick="changerTab('cr')">CR</div>
     <div class="tab" onclick="changerTab('dashboard')">DASH</div>
   </div>
-
-  <!-- TAB CARTE -->
   <div id="tab-carte" class="content">
     <div id="map"></div>
     <div class="map-controls">
@@ -95,8 +89,6 @@
     </div>
     <div id="itineraire-result" class="hidden"></div>
   </div>
-
-  <!-- TAB PDV -->
   <div id="tab-pdv" class="content hidden">
     <div class="card">
       <h3>Nouveau PDV</h3>
@@ -107,14 +99,9 @@
       <label>Stock décodeurs *</label>
       <input type="number" id="stock" placeholder="Ex: 50" min="0" autocomplete="off">
       <div class="grid">
-        <div>
-          <label>Ville</label>
-          <input type="text" id="ville" placeholder="Ville" autocomplete="off">
-        </div>
-        <div>
-          <label>Zone</label>
-          <input type="text" id="zone" placeholder="Zone" autocomplete="off">
-        </div>
+        <div><label>Ville</label><input type="text" id="ville" placeholder="Ville" autocomplete="off"></div>
+        <div><label>Zone</label><input type="text" id="zone" placeholder="Zone" autocomplete="off"></div>
+      </div>
       <label>Responsable zone</label>
       <input type="text" id="responsable" placeholder="Nom du responsable" autocomplete="off">
       <label>Photo PDV</label>
@@ -136,14 +123,10 @@
     </div>
     <div id="listePDV"></div>
   </div>
-
-  <!-- TAB CR -->
   <div id="tab-cr" class="content hidden">
     <div class="card">
       <div class="modal-title">Envoyer Compte Rendu</div>
-      <select id="cr-pdv" onchange="remplirPDVInfo()">
-        <option value="">Choisir un PDV *</option>
-      </select>
+      <select id="cr-pdv" onchange="remplirPDVInfo()"><option value="">Choisir un PDV *</option></select>
       <input type="text" id="cr-nom" placeholder="Nom du responsable" autocomplete="off">
       <input type="email" id="cr-email" placeholder="Email expéditeur" autocomplete="off">
       <input type="password" id="cr-password" placeholder="Mot de passe" autocomplete="off">
@@ -158,13 +141,9 @@
         <input type="number" id="cr-reabonnement" placeholder="Réabonnement" min="0">
       </div>
       <textarea id="cr-comment" placeholder="Commentaire général..." rows="3"></textarea>
-
       <label>Signature Gérant *</label>
       <canvas id="signature-pad" width="400" height="150"></canvas>
-      <div class="signature-controls">
-        <button class="btn btn-clear" onclick="clearSignature()">🗑️ Effacer</button>
-      </div>
-
+      <div class="signature-controls"><button class="btn btn-clear" onclick="clearSignature()">🗑️ Effacer</button></div>
       <div class="grid-3">
         <button class="btn btn-whatsapp" onclick="envoyerCR('whatsapp')">📱 WHATSAPP</button>
         <button class="btn btn-mail" onclick="envoyerCR('mail')">📧 ENVOYER</button>
@@ -173,69 +152,32 @@
     </div>
     <div id="listeCR"></div>
   </div>
-
-  <!-- TAB DASHBOARD -->
   <div id="tab-dashboard" class="content hidden">
     <div class="grid">
-      <div class="dash-card">
-        <div class="dash-num" id="dash-pdv">0</div>
-        <div class="dash-label">PDV Total</div>
-      </div>
-      <div class="dash-card">
-        <div class="dash-num" id="dash-cr">0</div>
-        <div class="dash-label">CR Total</div>
-      </div>
-      <div class="dash-card">
-        <div class="dash-num" id="dash-ventes">0</div>
-        <div class="dash-label">Ventes Total</div>
-      </div>
-      <div class="dash-card">
-        <div class="dash-num" id="dash-stock">0</div>
-        <div class="dash-label">Stock Décodeurs</div>
-      </div>
+      <div class="dash-card"><div class="dash-num" id="dash-pdv">0</div><div class="dash-label">PDV Total</div></div>
+      <div class="dash-card"><div class="dash-num" id="dash-cr">0</div><div class="dash-label">CR Total</div></div>
+      <div class="dash-card"><div class="dash-num" id="dash-ventes">0</div><div class="dash-label">Ventes Total</div></div>
+      <div class="dash-card"><div class="dash-num" id="dash-stock">0</div><div class="dash-label">Stock Décodeurs</div></div>
     </div>
-    <div class="card">
-      <h3>Par Zone</h3>
-      <div id="dash-par-zone"></div>
-    </div>
+    <div class="card"><h3>Par Zone</h3><div id="dash-par-zone"></div></div>
     <button class="btn btn-secondary" onclick="exporterExcel()">📊 EXPORT EXCEL</button>
   </div>
-
 <script>
-// CONFIG JSONBIN
 const BIN_ID = "6a24048bda38895dfe909246";
 const API_KEY = "$2a$10$08.b1NCBOTQthrRnFeWnPOD6v2k1sspw6SFGhL0/RiUS1pHsyBYJK";
 const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
-
-let pdvData = [];
-let crData = [];
-let map, userMarker, pdvMarkers = [], itineraireLayer;
-let userPosition = null;
-let signaturePad;
-let photoBase64 = null;
-
-// INIT
+let pdvData = [], crData = [], map, userMarker, pdvMarkers = [], itineraireLayer, userPosition = null, signaturePad, photoBase64 = null;
 function initMap() {
-  map = L.map('map').setView([6.4969, 2.6289], 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
-  userMarker = L.marker([6.4969, 2.6289], {
-    icon: L.divIcon({
-      html: '<div style="background:#0066cc;width:20px;height:20px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.5)"></div>',
-      iconSize: [20, 20]
-    })
-  }).addTo(map).bindPopup('TOI');
-
-  const canvas = document.getElementById('signature-pad');
-  signaturePad = new SignaturePad(canvas, {
-    backgroundColor: 'rgb(0,0,0)',
-    penColor: 'rgb(255,255,255)'
-  });
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
+  try {
+    map = L.map('map').setView([6.4969, 2.6289], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: '© OpenStreetMap'}).addTo(map);
+    userMarker = L.marker([6.4969, 2.6289], {icon: L.divIcon({html: '<div style="background:#0066cc;width:20px;height:20px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.5)"></div>',iconSize: [20, 20]})}).addTo(map).bindPopup('TOI');
+    const canvas = document.getElementById('signature-pad');
+    signaturePad = new SignaturePad(canvas, {backgroundColor: 'rgb(0,0,0)',penColor: 'rgb(255,255,255)'});
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+  } catch(e) { console.error(e); setStatus('Erreur carte', 'error'); }
 }
-
 function resizeCanvas() {
   const canvas = document.getElementById('signature-pad');
   const ratio = Math.max(window.devicePixelRatio || 1, 1);
@@ -244,11 +186,7 @@ function resizeCanvas() {
   canvas.getContext('2d').scale(ratio, ratio);
   signaturePad.clear();
 }
-
-function clearSignature() {
-  signaturePad.clear();
-}
-
+function clearSignature() { signaturePad.clear(); }
 function maPosition() {
   if (!navigator.geolocation) return alert('GPS non supporté');
   setStatus('Localisation...', 'load');
@@ -257,12 +195,8 @@ function maPosition() {
     userMarker.setLatLng(userPosition);
     map.setView(userPosition, 15);
     setStatus('Position trouvée ✓', 'ok');
-    syncAll();
-  }, err => {
-    setStatus('Erreur GPS', 'error');
-  });
+  }, err => { setStatus('Erreur GPS', 'error'); });
 }
-
 function prendreGPS() {
   if (!navigator.geolocation) return alert('GPS non supporté');
   navigator.geolocation.getCurrentPosition(pos => {
@@ -271,7 +205,6 @@ function prendreGPS() {
     alert('GPS capturé!');
   });
 }
-
 function previewPhoto(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -284,389 +217,138 @@ function previewPhoto(event) {
   };
   reader.readAsDataURL(file);
 }
-
 function distance(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
+  const R = 6371, dLat = (lat2 - lat1) * Math.PI / 180, dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
-
 function calculerItineraire() {
   if (!userPosition) return alert('Clique MA POSITION d\'abord');
-  if (pdvData.length === 0) return alert('Ajoute des PDV avec GPS d\'abord');
   const pdvAvecGPS = pdvData.filter(p => p.lat && p.lng);
   if (pdvAvecGPS.length === 0) return alert('Aucun PDV avec GPS');
-  let restants = [...pdvAvecGPS];
-  let ordre = [];
-  let positionActuelle = userPosition;
-  let distanceTotale = 0;
+  let restants = [...pdvAvecGPS], ordre = [], positionActuelle = userPosition, distanceTotale = 0;
   while (restants.length > 0) {
-    let plusProche = null;
-    let distMin = Infinity;
+    let plusProche = null, distMin = Infinity;
     restants.forEach(pdv => {
       const d = distance(positionActuelle[0], positionActuelle[1], pdv.lat, pdv.lng);
-      if (d < distMin) {
-        distMin = d;
-        plusProche = pdv;
-      }
+      if (d < distMin) { distMin = d; plusProche = pdv; }
     });
-    ordre.push(plusProche);
-    distanceTotale += distMin;
-    positionActuelle = [plusProche.lat, plusProche.lng];
+    ordre.push(plusProche); distanceTotale += distMin; positionActuelle = [plusProche.lat, plusProche.lng];
     restants = restants.filter(p => p.id!== plusProche.id);
   }
   if (itineraireLayer) map.removeLayer(itineraireLayer);
-  const points = [userPosition,...ordre.map(p => [p.lat, p.lng])];
-  itineraireLayer = L.polyline(points, { color: '#ff0000', weight: 4 }).addTo(map);
+  itineraireLayer = L.polyline([userPosition,...ordre.map(p => [p.lat, p.lng])], { color: '#ff0000', weight: 4 }).addTo(map);
   map.fitBounds(itineraireLayer.getBounds());
   document.getElementById('itineraire-result').className = 'itineraire-info';
-  document.getElementById('itineraire-result').innerHTML = `
-    <h3>🗺️ Itinéraire optimisé</h3>
-    <p><strong>Distance totale:</strong> ${distanceTotale.toFixed(1)} km</p>
-    <p><strong>Nombre de PDV:</strong> ${ordre.length}</p>
-    <p><strong>Ordre de visite:</strong></p>
-    <ol style="margin-left:20px;margin-top:8px">
-      ${ordre.map((p, i) => `<li>${p.nom} - ${p.ville || 'N/A'} (${p.stock || 0} décodeurs)</li>`).join('')}
-    </ol>
-  `;
+  document.getElementById('itineraire-result').innerHTML = `<h3>🗺️ Itinéraire optimisé</h3><p><strong>Distance:</strong> ${distanceTotale.toFixed(1)} km</p><p><strong>PDV:</strong> ${ordre.length}</p><ol style="margin-left:20px;margin-top:8px">${ordre.map(p => `<li>${p.nom} - ${p.ville || 'N/A'} (${p.stock || 0})</li>`).join('')}</ol>`;
   document.getElementById('totalKm').textContent = distanceTotale.toFixed(1);
-  syncAll();
 }
-
 async function chargerData() {
   try {
-    const res = await fetch(`${API_URL}/latest`, {
-      headers: { 'X-Master-Key': API_KEY }
-    });
+    const res = await fetch(`${API_URL}/latest`, {headers: {'X-Master-Key': API_KEY}});
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    pdvData = data.record.pdv || [];
-    crData = data.record.cr || [];
-    syncAll();
-    setStatus('Cloud connecté ✓', 'ok');
-  } catch (err) {
-    setStatus('Erreur cloud', 'error');
-    console.error(err);
-  }
+    pdvData = data.record.pdv || []; crData = data.record.cr || [];
+    syncAll(); setStatus('Cloud connecté ✓', 'ok');
+  } catch (err) { setStatus('Erreur cloud', 'error'); console.error(err); }
 }
-
 async function sauverData() {
   try {
-    const res = await fetch(API_URL, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-      body: JSON.stringify({ pdv: pdvData, cr: crData })
-    });
+    const res = await fetch(API_URL, {method: 'PUT',headers: {'Content-Type': 'application/json','X-Master-Key': API_KEY},body: JSON.stringify({pdv: pdvData,cr: crData})});
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    syncAll();
-    return true;
-  } catch (err) {
-    alert('Erreur sauvegarde cloud');
-    console.error(err);
-    return false;
-  }
+    syncAll(); return true;
+  } catch (err) { alert('Erreur sauvegarde'); console.error(err); return false; }
 }
-
-function syncAll() {
-  majStats();
-  afficherPDV();
-  afficherCR();
-  afficherDashboard();
-  remplirSelectPDV();
-  afficherPDVSurCarte();
-}
-
+function syncAll() { majStats(); afficherPDV(); afficherCR(); afficherDashboard(); remplirSelectPDV(); afficherPDVSurCarte(); }
 function setStatus(msg, type) {
   const el = document.getElementById('status');
-  el.className = 'status ' + type;
-  el.textContent = msg;
+  el.className = 'status ' + type; el.textContent = msg;
 }
-
 function annulerPDV() {
-  document.getElementById('nom').value = '';
-  document.getElementById('telephone').value = '';
-  document.getElementById('stock').value = '';
-  document.getElementById('ville').value = '';
-  document.getElementById('zone').value = '';
-  document.getElementById('responsable').value = '';
-  document.getElementById('lat').value = '';
-  document.getElementById('lng').value = '';
-  document.getElementById('notes').value = '';
-  document.getElementById('photo-preview').classList.add('hidden');
-  photoBase64 = null;
+  ['nom','telephone','stock','ville','zone','responsable','lat','lng','notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('photo-preview').classList.add('hidden'); photoBase64 = null;
 }
-
 async function ajouterPDV() {
-  const nom = document.getElementById('nom').value.trim();
-  const telephone = document.getElementById('telephone').value.trim();
-  const stock = parseInt(document.getElementById('stock').value) || 0;
-  const ville = document.getElementById('ville').value.trim();
-  const zone = document.getElementById('zone').value.trim();
-  const responsable = document.getElementById('responsable').value.trim();
-  const lat = parseFloat(document.getElementById('lat').value) || null;
-  const lng = parseFloat(document.getElementById('lng').value) || null;
-  const notes = document.getElementById('notes').value.trim();
-  if (!nom) return alert('Le nom du PDV est obligatoire');
-  if (!stock && stock!== 0) return alert('Stock décodeurs obligatoire');
-  setStatus('Sauvegarde...', 'load');
-  const nouveauPDV = {
-    id: Date.now(),
-    nom, telephone, stock, ville, zone, responsable, lat, lng, notes,
-    photo: photoBase64,
-    date: new Date().toLocaleDateString('fr-FR')
-  };
-  pdvData.unshift(nouveauPDV);
-  if (await sauverData()) {
-    annulerPDV();
-    setStatus('PDV ajouté ✓', 'ok');
-  }
-}
-
-function remplirPDVInfo() {
-  const pdvId = document.getElementById('cr-pdv').value;
-  if (!pdvId) return;
-  const pdv = pdvData.find(p => p.id == pdvId);
-  if (pdv) {
-    document.getElementById('cr-stock').value = pdv.stock || 0;
-  }
-}
-
-function annulerCR() {
-  document.getElementById('cr-pdv').value = '';
-  document.getElementById('cr-nom').value = '';
-  document.getElementById('cr-email').value = '';
-  document.getElementById('cr-password').value = '';
-  document.getElementById('cr-dest').value = 'armel.guigma@canal-plus.com';
-  document.getElementById('cr-stock').value = '';
-  document.getElementById('cr-credit').value = '';
-  document.getElementById('cr-recrutement').value = '';
-  document.getElementById('cr-reabonnement').value = '';
-  document.getElementById('cr-comment').value = '';
-  clearSignature();
-}
-
-async function envoyerCR(type) {
-  const pdvId = document.getElementById('cr-pdv').value;
-  const nom = document.getElementById('cr-nom').value.trim();
-  const email = document.getElementById('cr-email').value.trim();
-  const dest = document.getElementById('cr-dest').value.trim();
-  const stock = parseInt(document.getElementById('cr-stock').value) || 0;
-  const credit = parseInt(document.getElementById('cr-credit').value) || 0;
-  const recrutement = parseInt(document.getElementById('cr-recrutement').value) || 0;
-  const reabonnement = parseInt(document.getElementById('cr-reabonnement').value) || 0;
-  const comment = document.getElementById('cr-comment').value.trim();
-
-  if (!pdvId) return alert('Choisis un PDV');
+  const nom = document.getElementById('nom').value.trim(), stock = parseInt(document.getElementById('stock').value) || 0;
   if (!nom) return alert('Nom obligatoire');
-  if (!email) return alert('Email obligatoire');
-  if (signaturePad.isEmpty()) return alert('Signature obligatoire');
-
-  const pdv = pdvData.find(p => p.id == pdvId);
-  const date = new Date().toLocaleDateString('fr-FR');
-  const signature = signaturePad.toDataURL();
-
+  if (!stock && stock!== 0) return alert('Stock obligatoire');
+  setStatus('Sauvegarde...', 'load');
+  pdvData.unshift({id: Date.now(),nom,telephone: document.getElementById('telephone').value.trim(),stock,ville: document.getElementById('ville').value.trim(),zone: document.getElementById('zone').value.trim(),responsable: document.getElementById('responsable').value.trim(),lat: parseFloat(document.getElementById('lat').value) || null,lng: parseFloat(document.getElementById('lng').value) || null,notes: document.getElementById('notes').value.trim(),photo: photoBase64,date: new Date().toLocaleDateString('fr-FR')});
+  if (await sauverData()) { annulerPDV(); setStatus('PDV ajouté ✓', 'ok'); }
+}
+function remplirPDVInfo() {
+  const pdv = pdvData.find(p => p.id == document.getElementById('cr-pdv').value);
+  if (pdv) document.getElementById('cr-stock').value = pdv.stock || 0;
+}
+function annulerCR() {
+  ['cr-pdv','cr-nom','cr-email','cr-password','cr-dest','cr-stock','cr-credit','cr-recrutement','cr-reabonnement','cr-comment'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cr-dest').value = 'armel.guigma@canal-plus.com'; clearSignature();
+}
+async function envoyerCR(type) {
+  const pdvId = document.getElementById('cr-pdv').value, nom = document.getElementById('cr-nom').value.trim(), email = document.getElementById('cr-email').value.trim();
+  if (!pdvId) return alert('Choisis un PDV'); if (!nom) return alert('Nom obligatoire'); if (!email) return alert('Email obligatoire'); if (signaturePad.isEmpty()) return alert('Signature obligatoire');
+  const pdv = pdvData.find(p => p.id == pdvId), date = new Date().toLocaleDateString('fr-FR'), signature = signaturePad.toDataURL();
+  const stock = parseInt(document.getElementById('cr-stock').value) || 0, credit = parseInt(document.getElementById('cr-credit').value) || 0, recrutement = parseInt(document.getElementById('cr-recrutement').value) || 0, reabonnement = parseInt(document.getElementById('cr-reabonnement').value) || 0;
   pdv.stock = stock;
-
-  const nouveauCR = {
-    id: Date.now(),
-    pdvId: parseInt(pdvId),
-    pdvNom: pdv.nom,
-    nom, email, dest, stock, credit, recrutement, reabonnement, comment,
-    date,
-    ventes: recrutement + reabonnement,
-    signature
-  };
-
-  crData.unshift(nouveauCR);
+  crData.unshift({id: Date.now(),pdvId: parseInt(pdvId),pdvNom: pdv.nom,nom,email,dest: document.getElementById('cr-dest').value.trim(),stock,credit,recrutement,reabonnement,comment: document.getElementById('cr-comment').value.trim(),date,ventes: recrutement + reabonnement,signature});
   if (await sauverData()) {
-    const texte = `📋 COMPTE RENDU CANAL+ TOURNÉE
-
-🏪 PDV: ${pdv.nom}
-📍 Ville: ${pdv.ville || 'N/A'}
-🗺️ Zone: ${pdv.zone || 'N/A'}
-👤 Responsable: ${pdv.responsable || 'N/A'}
-📞 Tel: ${pdv.telephone || 'N/A'}
-
-👨‍💼 Envoyé par: ${nom}
-📧 Email: ${email}
-
-📊 DONNÉES TERRAIN:
-- Stock PDV: ${stock} décodeurs
-- Crédit FCFA: ${credit}
-- Recrutement: ${recrutement}
-- Réabonnement: ${reabonnement}
-- Total Ventes: ${recrutement + reabonnement}
-
-📅 Date: ${date}
-
-📝 Commentaire général:
-${comment || 'Aucun'}
-
-✍️ Signature: Voir pièce jointe
-
----
-Envoyé depuis l'app Canal+ Tournée ⚜️`;
-
-    if (type === 'whatsapp') {
-      window.open(`https://wa.me/?text=${encodeURIComponent(texte)}`, '_blank');
-    } else if (type === 'mail') {
-      const sujet = encodeURIComponent(`CR Canal+ - ${pdv.nom} - ${date}`);
-      window.open(`mailto:${dest}?subject=${sujet}&body=${encodeURIComponent(texte)}`, '_blank');
-    }
-
-    annulerCR();
-    setStatus('CR envoyé ✓ Stock PDV mis à jour', 'ok');
+    const texte = `📋 COMPTE RENDU CANAL+ TOURNÉE\n\n🏪 PDV: ${pdv.nom}\n📍 Ville: ${pdv.ville || 'N/A'}\n🗺️ Zone: ${pdv.zone || 'N/A'}\n👤 Responsable: ${pdv.responsable || 'N/A'}\n📞 Tel: ${pdv.telephone || 'N/A'}\n\n👨‍💼 Envoyé par: ${nom}\n📧 Email: ${email}\n\n📊 DONNÉES:\n- Stock: ${stock}\n- Crédit: ${credit}\n- Recrutement: ${recrutement}\n- Réabonnement: ${reabonnement}\n- Total: ${recrutement + reabonnement}\n\n📅 Date: ${date}\n\n📝 Commentaire:\n${document.getElementById('cr-comment').value.trim() || 'Aucun'}\n\n✍️ Signature: Voir PJ\n\n---\nEnvoyé depuis l'app Canal+ Tournée ⚜️`;
+    if (type === 'whatsapp') window.open(`https://wa.me/?text=${encodeURIComponent(texte)}`, '_blank');
+    else window.open(`mailto:${document.getElementById('cr-dest').value.trim()}?subject=${encodeURIComponent(`CR Canal+ - ${pdv.nom} - ${date}`)}&body=${encodeURIComponent(texte)}`, '_blank');
+    annulerCR(); setStatus('CR envoyé ✓', 'ok');
   }
 }
-
 async function supprimerPDV(id) {
   if (!confirm('Supprimer ce PDV et ses CR?')) return;
   setStatus('Suppression...', 'load');
-  pdvData = pdvData.filter(p => p.id!== id);
-  crData = crData.filter(c => c.pdvId!== id);
-  if (await sauverData()) {
-    setStatus('Supprimé ✓', 'ok');
-  }
+  pdvData = pdvData.filter(p => p.id!== id); crData = crData.filter(c => c.pdvId!== id);
+  if (await sauverData()) setStatus('Supprimé ✓', 'ok');
 }
-
 async function supprimerCR(id) {
   if (!confirm('Supprimer ce CR?')) return;
   crData = crData.filter(c => c.id!== id);
-  if (await sauverData()) {
-    setStatus('CR supprimé ✓', 'ok');
-  }
+  if (await sauverData()) setStatus('CR supprimé ✓', 'ok');
 }
-
 function afficherPDV() {
   const liste = document.getElementById('listePDV');
-  if (pdvData.length === 0) {
-    liste.innerHTML = '<div class="card">Aucun PDV. Ajoute le premier!</div>';
-    return;
-  }
-  liste.innerHTML = pdvData.map(p => `
-    <div class="card pdv-item">
-      <div class="flex">
-        <div style="flex:1">
-          <h3>${p.nom}</h3>
-          ${p.photo? `<img src="${p.photo}" class="photo-preview" style="max-height:120px">` : ''}
-          <div style="margin:6px 0">
-            ${p.ville? `<span class="badge">${p.ville}</span>` : ''}
-            ${p.zone? `<span class="badge zone">${p.zone}</span>` : ''}
-            ${p.stock || p.stock === 0? `<span class="badge ${p.stock < 10? 'faible' : 'stock'}">📦 ${p.stock} décodeurs</span>` : ''}
-          </div>
-          ${p.telephone? `<p style="opacity:0.8;font-size:13px">📞 ${p.telephone}</p>` : ''}
-          ${p.responsable? `<p style="opacity:0.7;font-size:13px">👤 Resp: ${p.responsable}</p>` : ''}
-          ${p.lat && p.lng? `<p style="opacity:0.6;font-size:12px">📍 GPS: ${p.lat}, ${p.lng}</p>` : ''}
-          ${p.notes? `<p style="margin-top:8px;font-size:14px">${p.notes}</p>` : ''}
-          <p style="opacity:0.5;font-size:12px;margin-top:6px">Ajouté le ${p.date}</p>
-        </div>
-        <div class="delete" onclick="supprimerPDV(${p.id})">🗑️</div>
-      </div>
-    </div>
-  `).join('');
+  if (pdvData.length === 0) { liste.innerHTML = '<div class="card">Aucun PDV. Ajoute le premier!</div>'; return; }
+  liste.innerHTML = pdvData.map(p => `<div class="card pdv-item"><div class="flex"><div style="flex:1"><h3>${p.nom}</h3>${p.photo? `<img src="${p.photo}" class="photo-preview" style="max-height:120px">` : ''}<div style="margin:6px 0">${p.ville? `<span class="badge">${p.ville}</span>` : ''}${p.zone? `<span class="badge zone">${p.zone}</span>` : ''}<span class="badge ${p.stock < 10? 'faible' : 'stock'}">📦 ${p.stock || 0}</span></div>${p.telephone? `<p style="opacity:0.8;font-size:13px">📞 ${p.telephone}</p>` : ''}${p.responsable? `<p style="opacity:0.7;font-size:13px">👤 Resp: ${p.responsable}</p>` : ''}${p.lat && p.lng? `<p style="opacity:0.6;font-size:12px">📍 GPS: ${p.lat}, ${p.lng}</p>` : ''}${p.notes? `<p style="margin-top:8px;font-size:14px">${p.notes}</p>` : ''}<p style="opacity:0.5;font-size:12px;margin-top:6px">Ajouté le ${p.date}</p></div><div class="delete" onclick="supprimerPDV(${p.id})">🗑️</div></div></div>`).join('');
 }
-
 function afficherPDVSurCarte() {
-  pdvMarkers.forEach(m => map.removeLayer(m));
-  pdvMarkers = [];
+  pdvMarkers.forEach(m => map.removeLayer(m)); pdvMarkers = [];
   pdvData.forEach(pdv => {
     if (pdv.lat && pdv.lng) {
-      const marker = L.marker([pdv.lat, pdv.lng], {
-        icon: L.divIcon({
-          html: `<div style="background:${pdv.stock < 10? '#ff3333' : '#ff0000'};width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:10px">${pdv.stock || 0}</div>`,
-          iconSize: [24, 24]
-        })
-      }).addTo(map).bindPopup(`
-        <strong>${pdv.nom}</strong><br>
-        ${pdv.photo? `<img src="${pdv.photo}" style="width:100%;border-radius:8px;margin:8px 0">` : ''}
-        📞 ${pdv.telephone || 'N/A'}<br>
-        📦 ${pdv.stock || 0} décodeurs<br>
-        📍 ${pdv.ville || 'N/A'}<br>
-        👤 ${pdv.responsable || 'N/A'}
-      `);
+      const marker = L.marker([pdv.lat, pdv.lng], {icon: L.divIcon({html: `<div style="background:${pdv.stock < 10? '#ff3333' : '#ff0000'};width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:10px">${pdv.stock || 0}</div>`,iconSize: [24, 24]})}).addTo(map).bindPopup(`<strong>${pdv.nom}</strong><br>${pdv.photo? `<img src="${pdv.photo}" style="width:100%;border-radius:8px;margin:8px 0">` : ''}📞 ${pdv.telephone || 'N/A'}<br>📦 ${pdv.stock || 0}<br>📍 ${pdv.ville || 'N/A'}<br>👤 ${pdv.responsable || 'N/A'}`);
       pdvMarkers.push(marker);
     }
   });
 }
-
 function afficherCR() {
   const liste = document.getElementById('listeCR');
-  if (crData.length === 0) {
-    liste.innerHTML = '<div class="card">Aucun CR. Ajoute le premier!</div>';
-    return;
-  }
-  liste.innerHTML = crData.map(c => `
-    <div class="card">
-      <div class="flex">
-        <div style="flex:1">
-          <h3>${c.pdvNom}</h3>
-          <p style="opacity:0.7;font-size:13px">${c.date}</p>
-          <div style="margin:8px 0">
-            <span class="badge stock">Stock: ${c.stock}</span>
-            <span class="badge credit">Crédit: ${c.credit}</span>
-            <span class="badge ventes">Rec: ${c.recrutement}</span>
-            <span class="badge ventes">Réab: ${c.reabonnement}</span>
-          </div>
-          <p style="opacity:0.8;font-size:13px">Par: ${c.nom}</p>
-          ${c.comment? `<p style="font-size:14px;margin-top:8px">${c.comment}</p>` : ''}
-          ${c.signature? `<img src="${c.signature}" style="width:150px;background:white;border-radius:8px;margin-top:8px">` : ''}
-        </div>
-        <div class="delete" onclick="supprimerCR(${c.id})">🗑️</div>
-      </div>
-    </div>
-  `).join('');
+  if (crData.length === 0) { liste.innerHTML = '<div class="card">Aucun CR. Ajoute le premier!</div>'; return; }
+  liste.innerHTML = crData.map(c => `<div class="card"><div class="flex"><div style="flex:1"><h3>${c.pdvNom}</h3><p style="opacity:0.7;font-size:13px">${c.date}</p><div style="margin:8px 0"><span class="badge stock">Stock: ${c.stock}</span><span class="badge credit">Crédit: ${c.credit}</span><span class="badge ventes">Rec: ${c.recrutement}</span><span class="badge ventes">Réab: ${c.reabonnement}</span></div><p style="opacity:0.8;font-size:13px">Par: ${c.nom}</p>${c.comment? `<p style="font-size:14px;margin-top:8px">${c.comment}</p>` : ''}${c.signature? `<img src="${c.signature}" style="width:150px;background:white;border-radius:8px;margin-top:8px">` : ''}</div><div class="delete" onclick="supprimerCR(${c.id})">🗑️</div></div></div>`).join('');
 }
-
 function exporterExcel() {
-  const wsData = [
-    ['Nom', 'Téléphone', 'Stock', 'Ville', 'Zone', 'Responsable', 'Lat', 'Lng', 'Notes', 'Date'],
-...pdvData.map(p => [p.nom, p.telephone, p.stock, p.ville, p.zone, p.responsable, p.lat, p.lng, p.notes, p.date])
-  ];
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'PDV');
-
-  const wsCR = [
-    ['PDV', 'Date', 'Nom', 'Email', 'Stock', 'Crédit', 'Recrutement', 'Réabonnement', 'Ventes', 'Commentaire'],
-...crData.map(c => [c.pdvNom, c.date, c.nom, c.email, c.stock, c.credit, c.recrutement, c.reabonnement, c.ventes, c.comment])
-  ];
-  const ws2 = XLSX.utils.aoa_to_sheet(wsCR);
+  const ws = XLSX.utils.aoa_to_sheet([['Nom','Téléphone','Stock','Ville','Zone','Responsable','Lat','Lng','Notes','Date'],...pdvData.map(p => [p.nom,p.telephone,p.stock,p.ville,p.zone,p.responsable,p.lat,p.lng,p.notes,p.date])]);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'PDV');
+  const ws2 = XLSX.utils.aoa_to_sheet([['PDV','Date','Nom','Email','Stock','Crédit','Recrutement','Réabonnement','Ventes','Commentaire'],...crData.map(c => [c.pdvNom,c.date,c.nom,c.email,c.stock,c.credit,c.recrutement,c.reabonnement,c.ventes,c.comment])]);
   XLSX.utils.book_append_sheet(wb, ws2, 'CR');
-
   XLSX.writeFile(wb, `CanalPlus_Tournee_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
-
 function afficherDashboard() {
   const totalVentes = crData.reduce((sum, c) => sum + (c.recrutement || 0) + (c.reabonnement || 0), 0);
-  const totalStock =   const totalStock = pdvData.reduce((sum, p) => sum + (parseInt(p.stock) || 0), 0);
+  const totalStock = pdvData.reduce((sum, p) => sum + (parseInt(p.stock) || 0), 0);
   const zones = [...new Set(pdvData.map(p => p.zone).filter(z => z))];
-  document.getElementById('dash-pdv').textContent = pdvData.length;
-  document.getElementById('dash-cr').textContent = crData.length;
-  document.getElementById('dash-ventes').textContent = totalVentes;
-  document.getElementById('dash-stock').textContent = totalStock;
-  const parZone = zones.map(z => {
+  document.getElementById('dash-pdv').textContent = pdvData.length; document.getElementById('dash-cr').textContent = crData.length;
+  document.getElementById('dash-ventes').textContent = totalVentes; document.getElementById('dash-stock').textContent = totalStock;
+  document.getElementById('dash-par-zone').innerHTML = zones.map(z => {
     const pdvZone = pdvData.filter(p => p.zone === z);
-    const crZone = crData.filter(c => {
-      const pdv = pdvData.find(p => p.id === c.pdvId);
-      return pdv && pdv.zone === z;
-    });
+    const crZone = crData.filter(c => { const pdv = pdvData.find(p => p.id === c.pdvId); return pdv && pdv.zone === z; });
     const ventesZone = crZone.reduce((sum, c) => sum + (c.recrutement || 0) + (c.reabonnement || 0), 0);
     const stockZone = pdvZone.reduce((sum, p) => sum + (parseInt(p.stock) || 0), 0);
-    return { zone: z, pdv: pdvZone.length, cr: crZone.length, ventes: ventesZone, stock: stockZone };
-  });
-  document.getElementById('dash-par-zone').innerHTML = parZone.map(z => `
-    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #2a2a2a">
-      <div><strong>${z.zone}</strong></div>
-      <div style="opacity:0.7;font-size:13px">${z.pdv} PDV • ${z.cr} CR • ${z.ventes} ventes • ${z.stock} stock</div>
-    </div>
-  `).join('');
+    return `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #2a2a2a"><div><strong>${z}</strong></div><div style="opacity:0.7;font-size:13px">${pdvZone.length} PDV • ${crZone.length} CR • ${ventesZone} ventes • ${stockZone} stock</div></div>`;
+  }).join('');
 }
-
 function majStats() {
   const totalStock = pdvData.reduce((sum, p) => sum + (parseInt(p.stock) || 0), 0);
   const totalVentes = crData.reduce((sum, c) => sum + (c.recrutement || 0) + (c.reabonnement || 0), 0);
@@ -675,13 +357,11 @@ function majStats() {
   document.getElementById('totalStock').textContent = totalStock;
   document.getElementById('totalVentes').textContent = totalVentes;
 }
-
 function remplirSelectPDV() {
   const select = document.getElementById('cr-pdv');
-  select.innerHTML = '<option value="">Choisir un PDV *</option>' + 
+  select.innerHTML = '<option value="">Choisir un PDV *</option>' +
     pdvData.map(p => `<option value="${p.id}">${p.nom} - ${p.ville || 'N/A'}</option>`).join('');
 }
-
 function changerTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.content').forEach(c => c.classList.add('hidden'));
@@ -689,12 +369,7 @@ function changerTab(tab) {
   document.getElementById('tab-' + tab).classList.remove('hidden');
   if (tab === 'carte') setTimeout(() => map.invalidateSize(), 100);
 }
-
-// INIT APP
-window.onload = () => {
-  initMap();
-  chargerData();
-};
+window.onload = () => { initMap(); chargerData(); };
 </script>
 </body>
 </html>

@@ -94,3 +94,42 @@ window.resetUser = () => {
 }
 
 document.addEventListener('DOMContentLoaded', loadPDV);
+
+// 4. Update compteurs : User = son total, Boss = somme globale
+const oldInitMap = window.initMap || function(){};
+window.initMap = function() {
+  oldInitMap();
+  updateCounters();
+}
+
+function updateCounters() {
+  const data = window.pdvData || [];
+  let totalCR = 0, totalStock = 0, totalVentes = 0;
+
+  data.forEach(pdv => {
+    totalCR += parseInt(pdv.credit || pdv.stock_deco || 0);
+    totalStock += parseInt(pdv.stock || pdv.stock_deco || 0);
+    totalVentes += parseInt(pdv.ventes || 0);
+  });
+
+  // Met à jour les badges en haut
+  const badges = document.querySelectorAll('.badge, [class*="stat"]');
+  badges.forEach(b => {
+    if(b.innerText.includes('PDV')) b.innerText = `${data.length} PDV`;
+    if(b.innerText.includes('CR')) b.innerText = `${totalCR} CR`;
+    if(b.innerText.includes('Stock')) b.innerText = `${totalStock} Stock`;
+    if(b.innerText.includes('Ventes')) b.innerText = `${totalVentes} Ventes`;
+  });
+
+  // Si Boss, ajoute le détail par commercial
+  if(localStorage.getItem('role') === 'boss') {
+    const detail = {};
+    data.forEach(pdv => {
+      const owner = pdv.owner || 'inconnu';
+      if(!detail[owner]) detail[owner] = {cr:0, pdv:0};
+      detail[owner].cr += parseInt(pdv.credit || pdv.stock_deco || 0);
+      detail[owner].pdv++;
+    });
+    console.table(detail); // Visible dans F12 pour toi Chef
+  }
+}

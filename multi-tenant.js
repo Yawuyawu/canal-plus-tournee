@@ -277,3 +277,57 @@ setTimeout(async () => {
     console.log('Loaded from JSONBin:', window.pdvData.length, 'PDV');
   }
 }, 1500);
+
+// V4.4.13 - Anti-vidage + Marker HO + Save auto
+console.log('V4.4.13 loaded');
+
+async function loadPDV() {
+  let dataFromCloud = null;
+  try {
+    const res = await fetch('https://api.jsonbin.io/v3/b/6a245702f5f4af5e29c32b19/latest');
+    const json = await res.json();
+    if(json.record && json.record.length > 0) dataFromCloud = json.record;
+  } catch(e) {}
+  
+  if(dataFromCloud) {
+    window.pdvData = dataFromCloud;
+    localStorage.setItem('pdv_backup', JSON.stringify(window.pdvData));
+  } else {
+    const backup = localStorage.getItem('pdv_backup');
+    window.pdvData = backup ? JSON.parse(backup) : [];
+  }
+  refreshMap();
+  updateCounters();
+}
+
+window.savePDV = async function() {
+  localStorage.setItem('pdv_backup', JSON.stringify(window.pdvData));
+  try {
+    await fetch('https://api.jsonbin.io/v3/b/6a245702f5f4af5e29c32b19', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(window.pdvData)
+    });
+  } catch(e) {}
+  refreshMap();
+  updateCounters();
+}
+
+window.refreshMap = function() {
+  if(!window.map) return;
+  if(window.pdvMarkers) window.pdvMarkers.forEach(m => window.map.removeLayer(m));
+  window.pdvMarkers = [];
+  window.pdvData.forEach(pdv => {
+    const initials = pdv.nom ? pdv.nom.substring(0,2).toUpperCase() : '??';
+    const icon = L.divIcon({
+      className: 'pdv-marker',
+      html: `<div style="background:#dc2626;color:white;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:bold;border:2px solid white">${initials}</div>`,
+      iconSize: [30, 30]
+    });
+    const marker = L.marker([pdv.lat, pdv.lng], {icon: icon}).addTo(window.map);
+    marker.bindPopup(`<b>${pdv.nom}</b><br>Stock: ${pdv.stock}<br>Tel: ${pdv.tel}`);
+    window.pdvMarkers.push(marker);
+  });
+}
+
+setTimeout(loadPDV, 1000);

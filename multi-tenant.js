@@ -1,84 +1,97 @@
-// CONFIG
-const MASTER_KEY = '$2a$10$ucVCxh7kyGTmZPIH.6JHQOHdQGUTyWD6o7Am0byx6fDKCb2cTlO0y';
+const MASTER_KEY = '$2a$10$...'; // garde ta vraie clé
 const BIN_MASTER_ID = '6a245702f5f4af5e29c32b19';
-const IS_BOSS = localStorage.getItem('role') === 'boss';
 
-// 1. Login + création bin auto
-if (!localStorage.getItem('userBin') && !IS_BOSS) {
-  let pseudo = '';
-  while (!pseudo) {
-    pseudo = prompt("Ton nom commercial, sans espace:");
-    if (pseudo === null) throw 'Setup annulé';
-    pseudo = pseudo.toLowerCase().replace(/\s/g,'').replace(/[^a-z0-9]/g,'');
-    if (!pseudo) alert('Pseudo invalide. Lettres/chiffres uniquement');
+const IS_BOSS = localStorage.getItem('role') === 'boss';
+const PSEUDO = localStorage.getItem('pseudo');
+let USER_BIN_ID = localStorage.getItem('userBin');
+
+// 1. Sauvegarde locale de sécurité
+function backupLocal() {
+  if(window.pdvData && window.pdvData.length > 0) {
+    localStorage.setItem('pdv_backup', JSON.stringify(window.pdvData));
   }
-  fetch('https://api.jsonbin.io/v3/b', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json','X-Master-Key':MASTER_KEY,'X-Bin-Name':pseudo},
-    body: JSON.stringify([])
-  }).then(r => r.json()).then(data => {
-    localStorage.setItem('userBin', data.metadata.id);
-    localStorage.setItem('pseudo', pseudo);
-    location.reload();
-  });
 }
 
-const USER_BIN_ID = localStorage.getItem('userBin');
-const PSEUDO = localStorage.getItem('pseudo') || 'boss';
+// 2. Restaure si vide
+function restoreLocal() {
+  const backup = localStorage.getItem('pdv_backup');
+  if(backup && (!window.pdvData || window.pdvData.length === 0)) {
+    window.pdvData = JSON.parse(backup);
+    console.log('Backup restauré:', window.pdvData.length, 'PDV');
+  }
+}
 
-// 2. Load : Boss agrège, User lit son bin
+// 3. Load PDV : ne vide JAMAIS avant d'avoir récupéré le cloud
 window.loadPDV = async function() {
+  backupLocal(); // sauve avant tout
+
   try {
-    if (IS_BOSS) {
+    if(IS_BOSS) {
+      // Mode Boss : agrège tout
       const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_MASTER_ID}/latest`, {
         headers: {'X-Master-Key': MASTER_KEY}
       });
-      const allData = (await res.json()).record || {};
+      const master = (await res.json()).record || {};
       window.pdvData = [];
-      Object.keys(allData).forEach(user => {
-        if(user === '_init') return;
-        if(Array.isArray(allData)) {
-          allData.forEach(p => window.pdvData.push({...p, owner: user}));
+      Object.keys(master).forEach(user => {
+        if(user!== '_init' && Array.isArray(master[user])) {
+          master[user].forEach(pdv => pdv.owner = user);
+          window.pdvData.push(...master[user]);
         }
       });
     } else {
-      if(!USER_BIN_ID) return;
+      // Mode User : son bin
+      if(!USER_BIN_ID) return createUserBin();
       const res = await fetch(`https://api.jsonbin.io/v3/b/${USER_BIN_ID}/latest`, {
         headers: {'X-Master-Key': MASTER_KEY}
       });
-      window.pdvData = (await res.json()).record || [];
+      const cloudData = (await res.json()).record || [];
+      // Si cloud vide mais on a du local, on garde le local
+      window.pdvData = cloudData.length > 0? cloudData : window.pdvData || [];
     }
-    if(typeof initMap === 'function') initMap();
+
+    backupLocal(); // re-sauve après load
+    if(window.initMap) window.initMap();
+    if(window.updateCounters) updateCounters();
+
   } catch(e) {
-    console.log('Load error:', e);
-    window.pdvData = [];
-    if(typeof initMap === 'function') initMap();
+    console.error('Erreur load:', e);
+    restoreLocal(); // récupère le backup si crash
+    if(window.initMap) window.initMap();
   }
 }
 
-// 3. Save : User sauve chez lui + update master
+// 4. Save : backup à chaque save
 window.savePDV = async function() {
   if (IS_BOSS) return alert("Mode Boss = lecture seule");
-  if(!USER_BIN_ID || !PSEUDO) return alert('Erreur user');
+  if(!USER_BIN_ID ||!PSEUDO) return alert('Erreur user');
+
+  backupLocal(); // sécurité
+
   try {
     await fetch(`https://api.jsonbin.io/v3/b/${USER_BIN_ID}`, {
       method: 'PUT',
       headers: {'Content-Type':'application/json','X-Master-Key':MASTER_KEY},
       body: JSON.stringify(window.pdvData || [])
     });
+
     const masterRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN_MASTER_ID}/latest`, {
       headers: {'X-Master-Key': MASTER_KEY}
     });
     const masterData = (await masterRes.json()).record || {"_init": true};
     masterData[PSEUDO] = window.pdvData || [];
+
     await fetch(`https://api.jsonbin.io/v3/b/${BIN_MASTER_ID}`, {
       method: 'PUT',
       headers: {'Content-Type':'application/json','X-Master-Key':MASTER_KEY},
       body: JSON.stringify(masterData)
     });
+
+    backupLocal();
     alert('Sauvé + sync boss OK');
   } catch(e) {
     alert('Erreur save: ' + e);
+    restoreLocal();
   }
 }
 
@@ -89,47 +102,14 @@ window.setBossMode = () => {
 }
 
 window.resetUser = () => {
-  localStorage.clear();
-  location.reload();
-}
-
-document.addEventListener('DOMContentLoaded', loadPDV);
-
-// 4. Update compteurs : User = son total, Boss = somme globale
-const oldInitMap = window.initMap || function(){};
-window.initMap = function() {
-  oldInitMap();
-  updateCounters();
-}
-
-function updateCounters() {
-  const data = window.pdvData || [];
-  let totalCR = 0, totalStock = 0, totalVentes = 0;
-
-  data.forEach(pdv => {
-    totalCR += parseInt(pdv.credit || pdv.stock_deco || 0);
-    totalStock += parseInt(pdv.stock || pdv.stock_deco || 0);
-    totalVentes += parseInt(pdv.ventes || 0);
-  });
-
-  // Met à jour les badges en haut
-  const badges = document.querySelectorAll('.badge, [class*="stat"]');
-  badges.forEach(b => {
-    if(b.innerText.includes('PDV')) b.innerText = `${data.length} PDV`;
-    if(b.innerText.includes('CR')) b.innerText = `${totalCR} CR`;
-    if(b.innerText.includes('Stock')) b.innerText = `${totalStock} Stock`;
-    if(b.innerText.includes('Ventes')) b.innerText = `${totalVentes} Ventes`;
-  });
-
-  // Si Boss, ajoute le détail par commercial
-  if(localStorage.getItem('role') === 'boss') {
-    const detail = {};
-    data.forEach(pdv => {
-      const owner = pdv.owner || 'inconnu';
-      if(!detail[owner]) detail[owner] = {cr:0, pdv:0};
-      detail[owner].cr += parseInt(pdv.credit || pdv.stock_deco || 0);
-      detail[owner].pdv++;
-    });
-    console.table(detail); // Visible dans F12 pour toi Chef
+  if(confirm('Effacer toutes les données locales?')) {
+    localStorage.clear();
+    location.reload();
   }
 }
+
+// Démarrage : restaure backup si dispo
+document.addEventListener('DOMContentLoaded', () => {
+  restoreLocal();
+  loadPDV();
+});

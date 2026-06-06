@@ -162,3 +162,25 @@ window.renderMarkers = function() {
     });
   }
 }
+
+// V4.4.7 - Edit PDV
+window.editPDV = function(index) {
+  if (IS_BOSS) return alert("Mode Boss = lecture seule");
+
+  const pdv = window.pdvData[index];
+  if(!pdv) return;
+
+  const newCredit = prompt(`Modifier CR pour ${pdv.nom || 'PDV'}:`, pdv.credit || pdv.stock_deco || 0);
+  if(newCredit === null) return;
+
+  const newStock = prompt(`Modifier Stock pour ${pdv.nom || 'PDV'}:`, pdv.stock || pdv.stock_deco || 0);
+  if(newStock === null) return;
+
+  window.pdvData[index].credit = parseInt(newCredit) || 0;
+  window.pdvData[index].stock = parseInt(newStock) || 0;
+
+  backupLocal();
+  updateCounters();
+  savePDV();
+  alert("PDV modifié + sauvé");
+}

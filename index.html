@@ -254,7 +254,7 @@ async function chargerData() {
 }
 async function sauverData() {
   try {
-    const res = await fetch(API_URL, {method: 'PUT',headers: {'Content-Type': 'application/json','X-Master-Key': API_KEY},body: JSON.stringify({pdv: pdvData,cr: crData})});
+    const res = await fetch(API_URL, {method: 'PUT',headers: {'Content-Type': 'application/json','X-Master-Key': API_KEY},body: JSON.stringify({record:{pdv: pdvData,cr: crData}})});
     if (!res.ok) throw new Error('HTTP ' + res.status);
     syncAll(); return true;
   } catch (err) { alert('Erreur sauvegarde'); console.error(err); return false; }

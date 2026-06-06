@@ -11,56 +11,56 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     body { background: #000; color: #fff; }
- .header { background: linear-gradient(135deg, #ff0000, #8b0000); padding: 16px; position: sticky; top: 0; z-index: 1000; }
+.header { background: linear-gradient(135deg, #ff0000, #8b0000); padding: 16px; position: sticky; top: 0; z-index: 1000; }
     h1 { font-size: 20px; margin-bottom: 6px; }
- .stats { opacity: 0.9; font-size: 13px; display: flex; gap: 12px; flex-wrap: wrap; }
- .stat { background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 6px; }
- .tabs { display: flex; gap: 8px; padding: 12px 16px; background: #000; position: sticky; top: 85px; z-index: 999; }
- .tab { flex: 1; background: #111; border: 1px solid #333; padding: 12px; border-radius: 10px; text-align: center; cursor: pointer; font-weight: 600; font-size: 14px; }
- .tab.active { background: #ff0000; border-color: #ff0000; }
- .content { padding: 16px; padding-bottom: 80px; }
- .btn { background: #ff0000; color: white; border: none; padding: 14px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; width: 100%; margin: 12px 0; font-size: 16px; }
- .btn:active { background: #cc0000; }
- .btn-secondary { background: #2a2a2a; }
- .btn-gps { background: #0066cc; }
- .btn-camera { background: #ff6600; }
- .btn-clear { background: #666; }
- .btn-annuler { background: #ff3333; }
- .btn-whatsapp { background: #25D366; }
- .btn-mail { background: #00a8ff; }
- .card { background: #111; border: 1px solid #2a2a2a; border-radius: 14px; padding: 16px; margin: 12px 0; }
+.stats { opacity: 0.9; font-size: 13px; display: flex; gap: 12px; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 6px; }
+.tabs { display: flex; gap: 8px; padding: 12px 16px; background: #000; position: sticky; top: 85px; z-index: 999; }
+.tab { flex: 1; background: #111; border: 1px solid #333; padding: 12px; border-radius: 10px; text-align: center; cursor: pointer; font-weight: 600; font-size: 14px; }
+.tab.active { background: #ff0000; border-color: #ff0000; }
+.content { padding: 16px; padding-bottom: 80px; }
+.btn { background: #ff0000; color: white; border: none; padding: 14px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; width: 100%; margin: 12px 0; font-size: 16px; }
+.btn:active { background: #cc0000; }
+.btn-secondary { background: #2a2a2a; }
+.btn-gps { background: #0066cc; }
+.btn-camera { background: #ff6600; }
+.btn-clear { background: #666; }
+.btn-annuler { background: #ff3333; }
+.btn-whatsapp { background: #25D366; }
+.btn-mail { background: #00a8ff; }
+.card { background: #111; border: 1px solid #2a2a2a; border-radius: 14px; padding: 16px; margin: 12px 0; }
     input, textarea, select { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 14px; border-radius: 10px; margin: 8px 0; font-size: 16px; }
     label { font-size: 14px; opacity: 0.8; margin-top: 8px; display: block; }
- .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
- .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
- .status { padding: 10px; border-radius: 8px; text-align: center; margin: 10px 0; font-size: 13px; font-weight: 600; }
- .status.ok { background: #0a5; }
- .status.error { background: #a00; }
- .status.load { background: #555; }
- .pdv-item { border-left: 4px solid #ff0000; }
- .flex { display: flex; gap: 12px; align-items: flex-start; }
- .badge { background: #2a2a2a; padding: 4px 8px; border-radius: 6px; font-size: 12px; display: inline-block; margin: 2px; }
- .badge.zone { background: #ff0000; }
- .badge.stock { background: #0066cc; }
- .badge.credit { background: #ff9900; }
- .badge.ventes { background: #00aa00; }
- .badge.faible { background: #ff3333; animation: pulse 2s infinite; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.status { padding: 10px; border-radius: 8px; text-align: center; margin: 10px 0; font-size: 13px; font-weight: 600; }
+.status.ok { background: #0a5; }
+.status.error { background: #a00; }
+.status.load { background: #555; }
+.pdv-item { border-left: 4px solid #ff0000; }
+.flex { display: flex; gap: 12px; align-items: flex-start; }
+.badge { background: #2a2a2a; padding: 4px 8px; border-radius: 6px; font-size: 12px; display: inline-block; margin: 2px; }
+.badge.zone { background: #ff0000; }
+.badge.stock { background: #0066cc; }
+.badge.credit { background: #ff9900; }
+.badge.ventes { background: #00aa00; }
+.badge.faible { background: #ff3333; animation: pulse 2s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
- .delete { background: #2a2a2a; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 18px; }
- .hidden { display: none; }
+.delete { background: #2a2a2a; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 18px; }
+.hidden { display: none; }
     #map { height: 400px; border-radius: 14px; margin: 12px 0; }
- .map-controls { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
- .map-controls button { flex: 1; min-width: 120px; }
- .dash-card { background: #111; border: 1px solid #2a2a2a; border-radius: 14px; padding: 16px; margin: 12px 0; text-align: center; }
- .dash-num { font-size: 32px; font-weight: 800; color: #ff0000; }
- .dash-label { opacity: 0.7; font-size: 13px; margin-top: 4px; }
- .itineraire-info { background: #111; border: 2px solid #ff0000; padding: 12px; border-radius: 10px; margin: 12px 0; }
- .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; text-align: center; }
- .info-text { font-size: 12px; opacity: 0.6; margin-top: -4px; margin-bottom: 8px; }
- .sync-badge { background: #00aa00; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 8px; }
- .photo-preview { width: 100%; border-radius: 10px; margin: 8px 0; max-height: 200px; object-fit: cover; }
+.map-controls { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+.map-controls button { flex: 1; min-width: 120px; }
+.dash-card { background: #111; border: 1px solid #2a2a2a; border-radius: 14px; padding: 16px; margin: 12px 0; text-align: center; }
+.dash-num { font-size: 32px; font-weight: 800; color: #ff0000; }
+.dash-label { opacity: 0.7; font-size: 13px; margin-top: 4px; }
+.itineraire-info { background: #111; border: 2px solid #ff0000; padding: 12px; border-radius: 10px; margin: 12px 0; }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+.info-text { font-size: 12px; opacity: 0.6; margin-top: -4px; margin-bottom: 8px; }
+.sync-badge { background: #00aa00; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 8px; }
+.photo-preview { width: 100%; border-radius: 10px; margin: 8px 0; max-height: 200px; object-fit: cover; }
     #signature-pad { border: 2px dashed #333; border-radius: 10px; background: #000; cursor: crosshair; }
- .signature-controls { display: flex; gap: 8px; margin-top: 8px; }
+.signature-controls { display: flex; gap: 8px; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -163,8 +163,8 @@
     <button class="btn btn-secondary" onclick="exporterExcel()">📊 EXPORT EXCEL</button>
   </div>
 <script>
-const BIN_ID = "6a24048bda38895dfe909246";
-const API_KEY = "$2a$10$08.b1NCBOTQthrRnFeWnPOD6v2k1sspw6SFGhL0/RiUS1pHsyBYJK";
+const BIN_ID = "6a2428c1da38895dfe9105fb";
+const API_KEY = "$2a$10$uy1TemJDL05Z/jErTWuOceDYGUup8.ujltEIcKjcDb./aWN4jGx3.";
 const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 let pdvData = [], crData = [], map, userMarker, pdvMarkers = [], itineraireLayer, userPosition = null, signaturePad, photoBase64 = null;
 function initMap() {

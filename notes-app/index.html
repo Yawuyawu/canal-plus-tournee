@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CANAL+ Tournée</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+body{margin:0;font-family:sans-serif}
+#map{height:100vh}
+.btn{position:absolute;left:10px;z-index:1000;background:#fff;border:2px solid #000;padding:10px 15px;border-radius:20px;font-weight:bold;cursor:pointer}
+#gps{top:60px} #add{top:110px} #dash{top:160px} #config{top:210px}
+#count{position:absolute;top:10px;right:10px;background:#000;color:#fff;padding:5px 15px;border-radius:15px;z-index:1000}
+#board{position:absolute;top:0;right:-320px;width:300px;height:100%;background:#fff;z-index:1001;transition:0.3s;overflow:auto;box-shadow:-2px 0 10px #0003}
+#board.show{right:0}
+.pdv-item{padding:12px;border-bottom:1px solid #eee}
+#setup{position:fixed;top:0;left:0;width:100%;height:100%;background:#000c;z-index:2000;display:flex;align-items:center;justify-content:center}
+#setup>div{background:#fff;padding:20px;border-radius:10px;width:90%;max-width:400px}
+#setup input{width:100%;padding:10px;margin:8px 0;border:2px solid #000;border-radius:5px;box-sizing:border-box}
+#setup button{background:#000;color:#fff;border:0;padding:12px 20px;border-radius:5px;width:100%;font-weight:bold;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="count">0 PDV</div>
+<button class="btn" id="gps">📍 GPS</button>
+<button class="btn" id="add">+ ADD</button>
+<button class="btn" id="dash">📊 DASHBOARD</button>
+<button class="btn" id="config">⚙️ CONFIG</button>
+<div id="board"><h3 style="padding:10px">Liste PDV <span id="total"></span></h3><div id="list"></div></div>
+
+<div id="setup" style="display:none">
+  <div>
+    <h3>Config JSONBin - 1 seule fois</h3>
+    <p>1. Va sur jsonbin.io → Create Bin avec <code>[]</code></p>
+    <p>2. Copie le BIN_ID et X-Master-Key ici :</p>
+    <input id="binid" placeholder="BIN_ID ex: 66f8a1b2acd3cb34a88e4b1a">
+    <input id="key" placeholder="X-Master-Key ex: $2a$10$...">
+    <button onclick="saveConfig()">SAUVER & LANCER</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let BIN_ID = localStorage.getItem('bin_id');
+let KEY = localStorage.getItem('bin_key');
+let URL = '';
+const map = L.map('map').setView([6.3703, 2.3912], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+let pdvs = [], markers = [];
+
+function saveConfig() {
+  BIN_ID = document.getElementById('binid').value.trim();
+  KEY = document.getElementById('key').value.trim();
+  if(!BIN_ID || !KEY) return alert('Remplis les 2 champs');
+  localStorage.setItem('bin_id', BIN_ID);
+  localStorage.setItem('bin_key', KEY);
+  document.getElementById('setup').style.display = 'none';
+  init();
+}
+
+function init() {
+  if(!BIN_ID || !KEY) {
+    document.getElementById('setup').style.display = 'flex';
+    return;
+  }
+  URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+  loadPDV();
+}
+
+async function loadPDV() {
+  try {
+    const r = await fetch(URL + '/latest', {headers:{'X-Master-Key':KEY}});
+    if(!r.ok) throw new Error('BIN_ID ou KEY incorrect');
+    const {record} = await r.json();
+    pdvs = record || [];
+    updateMap();
+  } catch(e) {
+    alert('Erreur: ' + e.message + '\nClique ⚙️ CONFIG pour corriger');
+    document.getElementById('setup').style.display = 'flex';
+  }
+}
+
+async function savePDV(pdv) {
+  pdvs.push(pdv);
+  await fetch(URL, {
+    method:'PUT',
+    headers:{'X-Master-Key':KEY,'Content-Type':'application/json'},
+    body:JSON.stringify(pdvs)
+  });
+  updateMap();
+}
+
+function updateMap() {
+  document.getElementById('count').textContent = pdvs.length + ' PDV';
+  document.getElementById('total').textContent = `(${pdvs.length})`;
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+  document.getElementById('list').innerHTML = '';
+  
+  pdvs.forEach((p,i) => {
+    const m = L.marker([p.lat,p.lng]).addTo(map).bindPopup(`<b>${p.nom}</b><br>${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}`);
+    markers.push(m);
+    document.getElementById('list').innerHTML += `<div class="pdv-item"><b>${i+1}. ${p.nom}</b><br><small>${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</small></div>`;
+  });
+}
+
+document.getElementById('gps').onclick = () => {
+  navigator.geolocation.getCurrentPosition(p => {
+    map.setView([p.coords.latitude, p.coords.longitude], 16);
+    L.marker([p.coords.latitude, p.coords.longitude]).addTo(map).bindPopup('VOUS ÊTES ICI').openPopup();
+  });
+};
+
+document.getElementById('add').onclick = () => {
+  if(!KEY) return alert('Configure d\'abord avec ⚙️ CONFIG');
+  const nom = prompt('Nom du PDV ?');
+  if(!nom) return;
+  navigator.geolocation.getCurrentPosition(p => {
+    savePDV({id:Date.now(),nom,lat:p.coords.latitude,lng:p.coords.longitude});
+  }, () => alert('Active le GPS dans les paramètres du téléphone'));
+};
+
+document.getElementById('dash').onclick = () => {
+  document.getElementById('board').classList.toggle('show');
+};
+
+document.getElementById('config').onclick = () => {
+  document.getElementById('setup').style.display = 'flex';
+  document.getElementById('binid').value = BIN_ID || '';
+  document.getElementById('key').value = KEY || '';
+};
+
+init();
+</script>
+</body>
+</html>

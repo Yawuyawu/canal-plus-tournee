@@ -235,3 +235,15 @@ window.refreshMap = function() {
     }
   });
 }
+
+// V4.4.10 - Force load depuis JSONBin si vide
+setTimeout(async () => {
+  if(!window.pdvData || window.pdvData.length === 0) {
+    const res = await fetch('https://api.jsonbin.io/v3/b/6a245702f5f4af5e29c32b19/latest');
+    const data = await res.json();
+    window.pdvData = Array.isArray(data.record) ? data.record : [];
+    localStorage.setItem('pdv_backup', JSON.stringify(window.pdvData));
+    if(typeof refreshMap === 'function') refreshMap();
+    if(typeof updateCounters === 'function') updateCounters();
+  }
+}, 1500);

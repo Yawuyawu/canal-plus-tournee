@@ -1,20 +1,48 @@
-
 <script>
-// PATCH V4.4.22 : SAUVEGARDE AUTO TÉLÉPHONE
-const KEY = 'canal_backup_v4422';
-console.log('PATCH MEMOIRE ACTIF');
+// === PATCH V4.4.23 INDEXEDDB + BACKUP ===
+const DBX="CPLUS72H";let dbx;
+const req=indexedDB.open(DBX,1);
+req.onupgradeneeded=e=>e.target.result.createObjectStore("d");
+req.onsuccess=e=>{
+  dbx=e.target.result;
+  dbx.transaction("d").objectStore("d").get("k").onsuccess=v=>{
+    if(v.target.result){
+      window.appData=v.target.result;
+      if(typeof loadAppData==="function")loadAppData();
+      if(typeof updateMap==="function")updateMap();
+    }
+    console.log("INDEXEDDB V4.4.23 ✓");
+  }
+};
 
-// Save auto quand tu modifies un truc
-setInterval(() => {
-  if(window.appData) localStorage.setItem(KEY, JSON.stringify(window.appData));
-}, 3000);
+// SAVE AUTO toutes les 2sec
+setInterval(()=>{
+  if(window.appData&&dbx){
+    dbx.transaction("d","readwrite").objectStore("d").put(window.appData,"k");
+  }
+},2000);
 
-// Restaure au chargement
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    const save = localStorage.getItem(KEY);
-    if(save && window.loadAppData) window.loadAppData(JSON.parse(save));
-    console.log('Données restaurées du téléphone');
-  }, 800);
-});
+// EXPORT 1 CLIC
+window.exportPDV=()=>{
+  let a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(window.appData||{})],{type:"application/json"}));
+  a.download="CPLUS72H-"+Date.now()+".json";
+  a.click()
+};
+
+// IMPORT 1 CLIC
+window.importPDV=f=>{
+  let r=new FileReader();
+  r.onload=e=>{
+    window.appData=JSON.parse(e.target.result);
+    if(typeof loadAppData==="function")loadAppData();
+    location.reload()
+  };
+  r.readAsText(f)
+};
 </script>
+
+<div style="position:fixed;bottom:8px;right:8px;z-index:99999;background:#000;padding:6px;border-radius:10px">
+<button onclick="exportPDV()" style="padding:12px;background:#00a1e0;color:#fff;border:0;border-radius:8px;font-weight:700">💾 BACKUP</button>
+<input type="file" onchange="importPDV(this.files[0])" accept=".json" style="width:90px;margin-left:5px;color:#fff">
+</div>

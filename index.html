@@ -1,5 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Canal+ Tournée 72H</title>
+</head>
+<body>
+
+<!-- TON APP CANAL+ ORIGINALE VA ICI -->
+<!-- Si t'avais du code avant, remets-le ici -->
+
 <script>
-// === PATCH V4.4.23 INDEXEDDB + BACKUP ===
+// === PATCH V4.4.23 INDEXEDDB + BACKUP + CLEAN ===
+localStorage.removeItem('canal_backup_v4422');
+localStorage.removeItem('canal_backup_v4421');
+localStorage.removeItem('canal_backup');
+localStorage.removeItem('CPLUS72H');
+
 const DBX="CPLUS72H";let dbx;
 const req=indexedDB.open(DBX,1);
 req.onupgradeneeded=e=>e.target.result.createObjectStore("d");
@@ -8,41 +25,56 @@ req.onsuccess=e=>{
   dbx.transaction("d").objectStore("d").get("k").onsuccess=v=>{
     if(v.target.result){
       window.appData=v.target.result;
-      if(typeof loadAppData==="function")loadAppData();
-      if(typeof updateMap==="function")updateMap();
+      try{if(typeof loadAppData==="function")loadAppData()}catch(e){}
+      try{if(typeof updateMap==="function")updateMap()}catch(e){}
+      try{if(typeof render==="function")render()}catch(e){}
+      try{if(typeof refreshUI==="function")refreshUI()}catch(e){}
     }
     console.log("INDEXEDDB V4.4.23 ✓");
   }
 };
+req.onerror=e=>console.log("INDEXEDDB ERROR",e);
 
-// SAVE AUTO toutes les 2sec
 setInterval(()=>{
   if(window.appData&&dbx){
-    dbx.transaction("d","readwrite").objectStore("d").put(window.appData,"k");
+    try{
+      dbx.transaction("d","readwrite").objectStore("d").put(window.appData,"k");
+    }catch(e){}
   }
 },2000);
 
-// EXPORT 1 CLIC
 window.exportPDV=()=>{
-  let a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([JSON.stringify(window.appData||{})],{type:"application/json"}));
-  a.download="CPLUS72H-"+Date.now()+".json";
-  a.click()
+  try{
+    let data=window.appData||{};
+    let a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:"application/json"}));
+    a.download="CPLUS72H-BACKUP-"+Date.now()+".json";
+    a.click();
+    alert("Backup exporté ✓");
+  }catch(e){alert("Erreur export")}
 };
 
-// IMPORT 1 CLIC
 window.importPDV=f=>{
+  if(!f)return;
   let r=new FileReader();
   r.onload=e=>{
-    window.appData=JSON.parse(e.target.result);
-    if(typeof loadAppData==="function")loadAppData();
-    location.reload()
+    try{
+      let data=JSON.parse(e.target.result);
+      window.appData=data;
+      if(dbx)dbx.transaction("d","readwrite").objectStore("d").put(data,"k");
+      if(typeof loadAppData==="function")loadAppData();
+      if(typeof updateMap==="function")updateMap();
+      alert("Import OK. Rechargement...");
+      setTimeout(()=>location.reload(),500);
+    }catch(err){alert("Fichier JSON invalide")}
   };
   r.readAsText(f)
 };
 </script>
 
-<div style="position:fixed;bottom:8px;right:8px;z-index:99999;background:#000;padding:6px;border-radius:10px">
-<button onclick="exportPDV()" style="padding:12px;background:#00a1e0;color:#fff;border:0;border-radius:8px;font-weight:700">💾 BACKUP</button>
-<input type="file" onchange="importPDV(this.files[0])" accept=".json" style="width:90px;margin-left:5px;color:#fff">
+<div style="position:fixed;bottom:8px;right:8px;z-index:99999;background:#111;padding:6px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.5)">
+<button onclick="exportPDV()" style="padding:12px 16px;background:#00a1e0;color:#fff;border:0;border-radius:8px;font-weight:700;cursor:pointer">💾 BACKUP</button>
+<input type="file" onchange="importPDV(this.files[0])" accept=".json" style="width:90px;margin-left:6px;color:#fff;font-size:11px">
 </div>
+</body>
+</html>

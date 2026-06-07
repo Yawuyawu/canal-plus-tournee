@@ -1,0 +1,20 @@
+
+<script>
+// PATCH V4.4.22 : SAUVEGARDE AUTO TÉLÉPHONE
+const KEY = 'canal_backup_v4422';
+console.log('PATCH MEMOIRE ACTIF');
+
+// Save auto quand tu modifies un truc
+setInterval(() => {
+  if(window.appData) localStorage.setItem(KEY, JSON.stringify(window.appData));
+}, 3000);
+
+// Restaure au chargement
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const save = localStorage.getItem(KEY);
+    if(save && window.loadAppData) window.loadAppData(JSON.parse(save));
+    console.log('Données restaurées du téléphone');
+  }, 800);
+});
+</script>

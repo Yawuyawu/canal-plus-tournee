@@ -1,54 +1,68 @@
-// V4.4.22 - GEOLOC + CLOUD LOAD
-console.log('V4.4.22 LIVE');
+// ===== API VERCEL TERMINUS =====
+const API = '/api/save';
 
-const BIN = 'https://api.jsonbin.io/v3/b/6a245702f5f4af5e29c32b19';
 window.pdvData = [];
 
-if(window.L && window.L.markerClusterGroup) {
-  window.L.markerClusterGroup = function(){ return L.layerGroup(); };
-}
-
-navigator.geolocation.getCurrentPosition(pos => {
-  window.userPos = [pos.coords.latitude, pos.coords.longitude];
-  if(window.map) {
-    window.map.setView(window.userPos, 13);
-    L.marker(window.userPos, {
-      icon: L.divIcon({
-        html: `<div style="background:#2563eb;color:white;border-radius:50%;width:20px;height:20px;border:3px solid white"></div>`
-      })
-    }).addTo(window.map).bindPopup('TOI');
-  }
-});
-
-async function loadPDV() {
-  const res = await fetch(BIN + '/latest?t=' + Date.now(), {cache: 'no-store'});
-  const json = await res.json();
-  window.pdvData = json.record || [];
-  console.log('CLOUD:', window.pdvData);
-  refreshMap();
-  updateCounters();
-}
-
-window.refreshMap = function() {
-  if(!window.map) return;
-  window.map.eachLayer(l => {
-    if(l instanceof L.Marker && !l.getPopup()?.getContent()?.includes('TOI')) {
-      window.map.removeLayer(l);
-    }
-  });
-  window.pdvData.forEach(pdv => {
-    const initials = pdv.nom ? pdv.nom.substring(0,2).toUpperCase() : 'XX';
-    const icon = L.divIcon({
-      html: `<div style="background:#dc2626;color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-weight:bold;border:3px solid white;font-size:14px">${initials}</div>`,
-      iconSize: [36, 36], iconAnchor: [18, 18]
+// SAVE vers Vercel
+window.savePDV = async () => {
+  try {
+    await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(window.pdvData)
     });
-    L.marker([pdv.lat, pdv.lng], {icon: icon}).addTo(window.map);
-  });
+    console.log('SAVE OK:', window.pdvData.length, 'PDV');
+  } catch(e) {
+    console.log('SAVE ERROR:', e);
+  }
 }
 
+// LOAD depuis Vercel
+window.loadPDV = async () => {
+  try {
+    const r = await fetch(API);
+    window.pdvData = await r.json();
+    console.log('LOAD OK:', window.pdvData.length, 'PDV');
+    updateCounters();
+  } catch(e) {
+    console.log('LOAD ERROR:', e);
+    window.pdvData = [];
+  }
+}
+
+// COMPTEURS FIX BUG 6 MILLIONS
 window.updateCounters = function() {
-  document.querySelectorAll('[data-count="pdv"]').forEach(e => e.textContent = window.pdvData.length);
-  document.querySelectorAll('[data-count="stock"]').forEach(e => e.textContent = window.pdvData.reduce((s,p) => s + (parseInt(p.stock)||0), 0));
+  if(!window.pdvData) window.pdvData = [];
+  
+  const totalPDV = window.pdvData.length;
+  const totalStock = window.pdvData.reduce((s,p) => s + Number(p.stock || 0), 0);
+  const totalCR = window.pdvData.filter(p => p.cr === true).length;
+  
+  const pdvEl = document.querySelector('[id*="PDV"]');
+  const stockEl = document.querySelector('[id*="Stock"]');
+  const crEl = document.querySelector('[id*="CR"]');
+  
+  if(pdvEl) pdvEl.textContent = totalPDV + ' PDV';
+  if(stockEl) stockEl.textContent = totalStock + ' Stock';
+  if(crEl) crEl.textContent = totalCR + ' CR';
 }
 
-setTimeout(loadPDV, 300);
+// FONCTION POUR AJOUTER UN PDV
+window.ajouterPDV = function(nom, stock, cr) {
+  const nouveauPDV = {
+    id: Date.now(),
+    nom: nom,
+    stock: Number(stock) || 0,
+    cr: Boolean(cr),
+    date: new Date().toISOString()
+  };
+  
+  window.pdvData.push(nouveauPDV);
+  updateCounters();
+  setTimeout(() => savePDV(), 300);
+}
+
+// CHARGEMENT AU DÉMARRAGE
+document.addEventListener('DOMContentLoaded', () => {
+  loadPDV();
+});
